@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Image } from "lucide-react";
 import { Link } from "react-router-dom";
-import { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuLink } from "@/components/ui/navigation-menu";
+import { NavigationMenu, NavigationMenuList } from "@/components/ui/navigation-menu";
 
 export const Header = () => {
   const [logo, setLogo] = useState<string>("");
@@ -27,7 +27,7 @@ export const Header = () => {
         isScrolled ? 'bg-primary shadow-lg' : 'bg-transparent'
       }`}
     >
-      <div className="container mx-auto flex items-center justify-between">
+      <div className="container mx-auto flex items-center justify-center">
         <Link to="/" className="flex items-center space-x-2">
           {logo ? (
             <img src={logo} alt="Header Logo" className="w-12 h-12 object-contain" />
@@ -43,16 +43,6 @@ export const Header = () => {
 
         <NavigationMenu>
           <NavigationMenuList>
-            <NavigationMenuItem>
-              <Link 
-                to="/" 
-                className={`px-4 py-2 rounded-md transition-colors ${
-                  isScrolled ? 'text-secondary hover:text-secondary/80' : 'text-primary hover:text-primary/80'
-                }`}
-              >
-                Acasă
-              </Link>
-            </NavigationMenuItem>
           </NavigationMenuList>
         </NavigationMenu>
       </div>
