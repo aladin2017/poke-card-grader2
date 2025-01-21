@@ -20,9 +20,9 @@ export const Footer = () => {
           <div className="md:col-span-4 space-y-6">
             <div className="flex items-center">
               {logo ? (
-                <img src={logo} alt="Footer Logo" className="w-48 h-32 object-contain" />
+                <img src={logo} alt="Footer Logo" className="w-40 h-28 object-contain" />
               ) : (
-                <Image className="w-48 h-32 text-primary" />
+                <Image className="w-40 h-28 text-primary" />
               )}
             </div>
             <p className="text-gray-400 text-base leading-relaxed">
@@ -98,7 +98,6 @@ export const Footer = () => {
               <li className="hover:text-green-500 transition-colors cursor-pointer">FAQ</li>
             </ul>
           </div>
-
         </div>
 
         {/* Copyright */}
