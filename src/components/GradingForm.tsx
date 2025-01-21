@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { useState } from "react"
 import { Card, CardContent } from "./ui/card"
-import { Plus, Trash2 } from "lucide-react"
+import { Plus, Trash2, ArrowRight, ArrowLeft } from "lucide-react"
 import {
   Select,
   SelectContent,
@@ -23,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Progress } from "@/components/ui/progress"
 
 const cardSchema = z.object({
   description: z.string().min(10, {
@@ -131,14 +132,36 @@ export function GradingForm() {
     })
   }
 
+  const steps = [
+    "Cartonașe",
+    "Date Personale",
+    "Finalizare"
+  ]
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        {step === 1 && (
-          <div className="space-y-6">
-            <div className="space-y-4">
+        <div className="mb-8">
+          <div className="flex justify-between mb-2">
+            {steps.map((stepName, idx) => (
+              <span
+                key={stepName}
+                className={`text-sm font-medium ${
+                  step === idx + 1 ? "text-primary" : "text-gray-400"
+                }`}
+              >
+                {stepName}
+              </span>
+            ))}
+          </div>
+          <Progress value={(step / steps.length) * 100} className="h-2" />
+        </div>
+
+        <div className="min-h-[400px]">
+          {step === 1 && (
+            <div className="space-y-6">
               {fields.map((field, index) => (
-                <Card key={field.id}>
+                <Card key={field.id} className="border-primary/20">
                   <CardContent className="pt-6">
                     <div className="space-y-4">
                       <FormField
@@ -150,7 +173,7 @@ export function GradingForm() {
                             <FormControl>
                               <Textarea 
                                 placeholder="Descrieți cartonașul (nume, serie, stare etc.)"
-                                className="min-h-[100px]"
+                                className="resize-none"
                                 {...field}
                               />
                             </FormControl>
@@ -185,9 +208,9 @@ export function GradingForm() {
                     {fields.length > 1 && (
                       <Button
                         type="button"
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
-                        className="mt-4"
+                        className="mt-4 text-red-500 hover:text-red-600 hover:bg-red-50"
                         onClick={() => remove(index)}
                       >
                         <Trash2 className="w-4 h-4 mr-2" />
@@ -197,150 +220,150 @@ export function GradingForm() {
                   </CardContent>
                 </Card>
               ))}
-            </div>
-            
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => append({ description: "", condition: "" })}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Adaugă cartonaș
-            </Button>
+              
+              <div className="flex flex-col gap-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => append({ description: "", condition: "" })}
+                  className="w-full"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Adaugă cartonaș
+                </Button>
 
-            <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="package"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Pachet de servicii</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selectați pachetul" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {packages.map(pkg => (
+                            <SelectItem key={pkg.id} value={pkg.id}>
+                              {pkg.name} - {pkg.price}€/cartonaș
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="shipping"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Metoda de expediere</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selectați metoda de expediere" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {shipping.map(option => (
+                            <SelectItem key={option.id} value={option.id}>
+                              {option.name} - {option.price}€
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {selectedPackage && selectedShipping && (
+                <Card className="bg-primary/5 border-primary/20">
+                  <CardContent className="pt-6">
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span>Cost gradare ({cards.length} cartonașe)</span>
+                        <span>{packages.find(p => p.id === selectedPackage)?.price! * cards.length}€</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Cost expediere</span>
+                        <span>{shipping.find(s => s.id === selectedShipping)?.price}€</span>
+                      </div>
+                      <div className="flex justify-between font-bold pt-2 border-t border-primary/20">
+                        <span>Total</span>
+                        <span>{calculateTotal()}€</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
+
+          {step === 2 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="package"
+                name="fullName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Pachet de servicii</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selectați pachetul" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {packages.map(pkg => (
-                          <SelectItem key={pkg.id} value={pkg.id}>
-                            {pkg.name} - {pkg.price}€/cartonaș
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormLabel>Nume complet</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ion Popescu" {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
-                name="shipping"
+                name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Metoda de expediere</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selectați metoda de expediere" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {shipping.map(option => (
-                          <SelectItem key={option.id} value={option.id}>
-                            {option.name} - {option.price}€
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input placeholder="email@exemplu.com" {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            </div>
-
-            {selectedPackage && selectedShipping && (
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span>Cost gradare ({cards.length} cartonașe)</span>
-                      <span>{packages.find(p => p.id === selectedPackage)?.price! * cards.length}€</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Cost expediere</span>
-                      <span>{shipping.find(s => s.id === selectedShipping)?.price}€</span>
-                    </div>
-                    <div className="flex justify-between font-bold pt-2 border-t">
-                      <span>Total</span>
-                      <span>{calculateTotal()}€</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        )}
-
-        {step === 2 && (
-          <div className="space-y-4">
-            <FormField
-              control={form.control}
-              name="fullName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nume complet</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ion Popescu" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input placeholder="email@exemplu.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Telefon</FormLabel>
-                  <FormControl>
-                    <Input placeholder="0712345678" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="address"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Adresa</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Strada, număr, bloc, scară, apartament"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Telefon</FormLabel>
+                    <FormControl>
+                      <Input placeholder="0712345678" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="address"
+                render={({ field }) => (
+                  <FormItem className="md:col-span-2">
+                    <FormLabel>Adresa</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Strada, număr, bloc, scară, apartament"
+                        className="resize-none"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="city"
@@ -367,55 +390,57 @@ export function GradingForm() {
                   </FormItem>
                 )}
               />
+              <FormField
+                control={form.control}
+                name="postalCode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Cod poștal</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
-            <FormField
-              control={form.control}
-              name="postalCode"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Cod poștal</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        )}
+          )}
 
-        {step === 3 && (
-          <div className="space-y-6">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span>Cost gradare ({cards.length} cartonașe)</span>
-                    <span>{packages.find(p => p.id === selectedPackage)?.price! * cards.length}€</span>
+          {step === 3 && (
+            <div className="space-y-6">
+              <Card className="bg-primary/5 border-primary/20">
+                <CardContent className="pt-6">
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span>Cost gradare ({cards.length} cartonașe)</span>
+                      <span>{packages.find(p => p.id === selectedPackage)?.price! * cards.length}€</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Cost expediere</span>
+                      <span>{shipping.find(s => s.id === selectedShipping)?.price}€</span>
+                    </div>
+                    <div className="flex justify-between font-bold pt-2 border-t border-primary/20">
+                      <span>Total de plată</span>
+                      <span>{calculateTotal()}€</span>
+                    </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span>Cost expediere</span>
-                    <span>{shipping.find(s => s.id === selectedShipping)?.price}€</span>
-                  </div>
-                  <div className="flex justify-between font-bold pt-2 border-t">
-                    <span>Total de plată</span>
-                    <span>{calculateTotal()}€</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </div>
 
-        <div className="flex justify-between pt-4">
+        <div className="flex justify-between pt-4 border-t">
           {step > 1 && (
             <Button type="button" variant="outline" onClick={prevStep}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
               Înapoi
             </Button>
           )}
           {step < 3 ? (
-            <Button type="button" onClick={nextStep} className="ml-auto">
+            <Button type="button" onClick={nextStep} className={`${step === 1 ? "w-full" : "ml-auto"}`}>
               Continuă
+              <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           ) : (
             <Button type="submit" className="ml-auto">
