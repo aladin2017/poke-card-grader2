@@ -28,14 +28,14 @@ export const Hero = () => {
               Începe Gradarea
             </Button>
           </DialogTrigger>
-          <DialogContent className="w-full max-w-3xl p-6">
+          <DialogContent className="w-full max-w-4xl p-6 overflow-visible">
             <DialogHeader className="mb-6">
               <DialogTitle className="text-2xl font-bold">Începe Procesul de Gradare</DialogTitle>
               <DialogDescription className="text-gray-600 mt-2">
                 Completează formularul de mai jos și te vom contacta pentru detalii.
               </DialogDescription>
             </DialogHeader>
-            <div className="overflow-y-auto max-h-[calc(80vh-10rem)] pr-2 relative">
+            <div className="overflow-y-auto max-h-[calc(85vh-10rem)] pr-2 relative">
               <GradingForm />
             </div>
           </DialogContent>
