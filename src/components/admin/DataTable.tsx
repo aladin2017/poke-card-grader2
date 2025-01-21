@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Eye, CheckCircle, XCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface Order {
   id: string;
@@ -28,31 +28,36 @@ interface DataTableProps {
 
 export function DataTable({ showAll = false }: DataTableProps) {
   const { toast } = useToast();
-  const [orders, setOrders] = useState<Order[]>([
-    {
-      id: "1",
-      customer: "John Doe",
-      cards: 3,
-      status: "pending",
-      date: "2024-02-20",
-      total: "€45.00",
-    },
-    {
-      id: "2",
-      customer: "Jane Smith",
-      cards: 1,
-      status: "completed",
-      date: "2024-02-19",
-      total: "€15.00",
-    },
-  ]);
+  const [orders, setOrders] = useState<Order[]>([]);
+
+  useEffect(() => {
+    // Get orders from localStorage
+    const storedOrders = localStorage.getItem('gradingOrders');
+    if (storedOrders) {
+      const parsedOrders = JSON.parse(storedOrders);
+      // Transform the grading form data into the Order format
+      const formattedOrders = parsedOrders.map((order: any, index: number) => ({
+        id: (index + 1).toString(),
+        customer: `${order.fullName}`,
+        cards: order.cards.length,
+        status: "pending" as const,
+        date: new Date().toISOString().split('T')[0],
+        total: calculateTotal(order.package, order.cards.length),
+      }));
+      setOrders(formattedOrders);
+    }
+  }, []);
+
+  const calculateTotal = (packageType: string, cardCount: number) => {
+    const basePrice = packageType === 'premium' ? 25 : 15;
+    return `€${basePrice * cardCount}.00`;
+  };
 
   const handleViewOrder = (orderId: string) => {
     toast({
       title: "Viewing Order Details",
       description: `Viewing details for order #${orderId}`,
     });
-    // Here you would typically open a modal or navigate to a detailed view
   };
 
   const handleApproveOrder = (orderId: string) => {
