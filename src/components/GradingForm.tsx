@@ -27,7 +27,6 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
-  // Personal Details
   fullName: z.string().min(2, {
     message: "Numele trebuie să conțină cel puțin 2 caractere.",
   }),
@@ -58,7 +57,6 @@ const formSchema = z.object({
   shippingMethod: z.enum(["standard", "express"], {
     required_error: "Vă rugăm să selectați o metodă de livrare.",
   }),
-  // Cards
   cards: z.array(
     z.object({
       id: z.string(),
@@ -90,7 +88,7 @@ export function GradingForm() {
       country: "",
       serviceType: "standard",
       shippingMethod: "standard",
-      cards: [{ id: "1" }],
+      cards: [{ id: "1", name: "", year: "", set: "" }],
     },
   });
 
@@ -102,7 +100,7 @@ export function GradingForm() {
   const addCard = () => {
     const newId = (cards.length + 1).toString();
     setCards([...cards, { id: newId }]);
-    append({ id: newId });
+    append({ id: newId, name: "", year: "", set: "" });
   };
 
   const removeCard = (index: number) => {
@@ -112,9 +110,39 @@ export function GradingForm() {
     remove(index);
   };
 
+  const validateStep = async () => {
+    const values = form.getValues();
+    
+    if (step === 1) {
+      const isValid = await form.trigger([
+        "fullName",
+        "email",
+        "phone",
+        "address",
+        "city",
+        "state",
+        "zipCode",
+        "country",
+        "serviceType",
+        "shippingMethod",
+      ]);
+      return isValid;
+    }
+    
+    if (step === 2) {
+      const isValid = await form.trigger("cards");
+      return isValid;
+    }
+    
+    return true;
+  };
+
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     if (step < 3) {
-      setStep(step + 1);
+      const isStepValid = await validateStep();
+      if (isStepValid) {
+        setStep(step + 1);
+      }
       return;
     }
 
