@@ -282,20 +282,19 @@ export function GradingQueue() {
                               <DialogTitle>Grade Card: {item.cardName}</DialogTitle>
                             </DialogHeader>
                             <GradingForm item={item} />
-                          </DialogHeader>
-                        </DialogContent>
-                      </Dialog>
+                          </DialogContent>
+                        </Dialog>
                         
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="text-green-600"
-                        onClick={() => handleMarkComplete(item.id)}
-                      >
-                        Mark Complete
-                        <CheckCircle className="ml-2 h-4 w-4" />
-                      </Button>
-                    </>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="text-green-600"
+                          onClick={() => handleMarkComplete(item.id)}
+                        >
+                          Mark Complete
+                          <CheckCircle className="ml-2 h-4 w-4" />
+                        </Button>
+                      </>
                     )}
                   </div>
                 </TableCell>
