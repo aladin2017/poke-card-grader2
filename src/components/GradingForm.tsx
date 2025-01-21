@@ -173,7 +173,6 @@ export function GradingForm() {
       return;
     }
 
-    // Validate all steps up to the target step
     for (let i = 1; i < stepNumber; i++) {
       const isValid = await validateStep(i);
       if (!isValid) {
@@ -187,7 +186,6 @@ export function GradingForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       setIsSubmitting(true)
-      // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 2000))
       
       console.log(values)
@@ -196,7 +194,6 @@ export function GradingForm() {
         description: "Vă vom redirecționa către pagina de plată.",
       })
       
-      // Reset form and go back to step 1
       form.reset()
       setStep(1)
     } catch (error) {
