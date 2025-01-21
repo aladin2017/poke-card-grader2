@@ -12,9 +12,7 @@ export const CardVerification = () => {
   const [cardData, setCardData] = useState<QueueItem | null>(null);
   const { toast } = useToast();
 
-  // This is a mock function. In a real application, this would fetch data from your backend
   const verifyCard = () => {
-    // Mock data for demonstration
     if (ean8.length === 8) {
       const mockData: QueueItem = {
         id: "1",
@@ -40,7 +38,7 @@ export const CardVerification = () => {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Please enter a valid 8-digit EAN code",
+        description: "Please enter a valid 8-digit unique card number",
       });
     }
   };
@@ -57,14 +55,14 @@ export const CardVerification = () => {
           Card Verification System
         </h1>
         <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
-          Enter your card's EAN8 code to verify its authenticity and view grading details
+          Enter your card's unique certification number to verify its authenticity and view grading details
         </p>
       </div>
 
       <div className="w-full max-w-xl mx-auto flex gap-4 mb-8">
         <Input
           type="text"
-          placeholder="Enter EAN8 code"
+          placeholder="Enter unique certification number"
           value={ean8}
           onChange={(e) => setEan8(e.target.value)}
           className="text-lg"
@@ -97,7 +95,7 @@ export const CardVerification = () => {
                       <p className="font-medium">{cardData.condition}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">EAN8</p>
+                      <p className="text-sm text-gray-500">Certification Number</p>
                       <p className="font-medium font-mono">{cardData.ean8}</p>
                     </div>
                   </div>
