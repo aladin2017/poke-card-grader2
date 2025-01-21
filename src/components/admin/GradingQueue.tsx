@@ -38,6 +38,8 @@ interface QueueItem {
     edges: number;
     corners: number;
     finalGrade: number;
+    frontImage?: string;
+    backImage?: string;
   };
 }
 
@@ -178,11 +180,28 @@ export function GradingQueue() {
     const [surfaces, setSurfaces] = useState<number>(0);
     const [edges, setEdges] = useState<number>(0);
     const [corners, setCorners] = useState<number>(0);
+    const [frontImage, setFrontImage] = useState<string>("");
+    const [backImage, setBackImage] = useState<string>("");
 
     const calculateFinalGrade = () => {
       const grades = [centering, surfaces, edges, corners];
       const sum = grades.reduce((acc, curr) => acc + curr, 0);
       return Number((sum / grades.length).toFixed(2));
+    };
+
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, side: 'front' | 'back') => {
+      const file = e.target.files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          if (side === 'front') {
+            setFrontImage(reader.result as string);
+          } else {
+            setBackImage(reader.result as string);
+          }
+        };
+        reader.readAsDataURL(file);
+      }
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -194,11 +213,13 @@ export function GradingQueue() {
         edges,
         corners,
         finalGrade,
+        frontImage,
+        backImage,
       });
     };
 
     return (
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="centering">Centering (0-10)</Label>
@@ -251,6 +272,49 @@ export function GradingQueue() {
               onChange={(e) => setCorners(Number(e.target.value))}
               required
             />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="frontImage">Front Image</Label>
+            <Input
+              id="frontImage"
+              type="file"
+              accept="image/*"
+              onChange={(e) => handleImageUpload(e, 'front')}
+              required
+            />
+            {frontImage && (
+              <div className="mt-2">
+                <img 
+                  src={frontImage} 
+                  alt="Card Front" 
+                  className="w-full h-40 object-contain border rounded"
+                />
+                <span className="text-sm text-gray-500">Front Side</span>
+              </div>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="backImage">Back Image</Label>
+            <Input
+              id="backImage"
+              type="file"
+              accept="image/*"
+              onChange={(e) => handleImageUpload(e, 'back')}
+              required
+            />
+            {backImage && (
+              <div className="mt-2">
+                <img 
+                  src={backImage} 
+                  alt="Card Back" 
+                  className="w-full h-40 object-contain border rounded"
+                />
+                <span className="text-sm text-gray-500">Back Side</span>
+              </div>
+            )}
           </div>
         </div>
         
