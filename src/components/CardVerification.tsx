@@ -133,7 +133,7 @@ export const CardVerification = () => {
                       <img
                         src={cardData.gradingDetails?.frontImage}
                         alt="Card Front"
-                        className="w-full h-80 object-contain rounded-lg shadow-lg hover:scale-105 transition-transform duration-300"
+                        className="w-full h-96 object-contain rounded-lg shadow-lg hover:scale-105 transition-transform duration-300"
                       />
                     </div>
                     <div>
@@ -141,7 +141,7 @@ export const CardVerification = () => {
                       <img
                         src={cardData.gradingDetails?.backImage}
                         alt="Card Back"
-                        className="w-full h-80 object-contain rounded-lg shadow-lg hover:scale-105 transition-transform duration-300"
+                        className="w-full h-96 object-contain rounded-lg shadow-lg hover:scale-105 transition-transform duration-300"
                       />
                     </div>
                   </div>
