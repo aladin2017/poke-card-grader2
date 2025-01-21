@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye, CheckCircle, XCircle } from "lucide-react";
+import { Eye, CheckCircle, XCircle, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
@@ -17,7 +17,7 @@ interface Order {
   id: string;
   customer: string;
   cards: number;
-  status: "pending" | "completed" | "rejected";
+  status: "pending" | "queued" | "completed" | "rejected";
   date: string;
   total: string;
 }
@@ -38,7 +38,7 @@ export function DataTable({ showAll = false }: DataTableProps) {
         id: (index + 1).toString(),
         customer: `${order.fullName}`,
         cards: order.cards.length,
-        status: "pending" as const,
+        status: order.status || "pending",
         date: new Date().toISOString().split('T')[0],
         total: calculateTotal(order.package, order.cards.length),
       }));
@@ -53,87 +53,104 @@ export function DataTable({ showAll = false }: DataTableProps) {
 
   const handleViewOrder = (orderId: string) => {
     toast({
-      title: "Viewing Order Details",
-      description: `Viewing details for order #${orderId}`,
+      title: "Vizualizare Comandă",
+      description: `Se vizualizează detaliile comenzii #${orderId}`,
     });
   };
 
-  const handleApproveOrder = (orderId: string) => {
+  const moveToQueue = (orderId: string) => {
     const updatedOrders = orders.map(order => 
       order.id === orderId 
-        ? { ...order, status: "completed" as const }
+        ? { ...order, status: "queued" }
         : order
     );
     setOrders(updatedOrders);
+    updateLocalStorage(orderId, "queued");
     
-    // Update localStorage with the new status
-    const storedOrders = localStorage.getItem('gradingOrders');
-    if (storedOrders) {
-      const parsedOrders = JSON.parse(storedOrders);
-      const updatedStoredOrders = parsedOrders.map((order: any, index: number) => {
-        if ((index + 1).toString() === orderId) {
-          return { ...order, status: "completed" };
-        }
-        return order;
-      });
-      localStorage.setItem('gradingOrders', JSON.stringify(updatedStoredOrders));
-    }
+    toast({
+      title: "Comandă în procesare",
+      description: `Comanda #${orderId} a fost mutată în coada de gradare.`,
+    });
+  };
+
+  const markAsCompleted = (orderId: string) => {
+    const updatedOrders = orders.map(order => 
+      order.id === orderId 
+        ? { ...order, status: "completed" }
+        : order
+    );
+    setOrders(updatedOrders);
+    updateLocalStorage(orderId, "completed");
 
     toast({
-      title: "Order Approved",
-      description: `Order #${orderId} has been approved successfully.`,
+      title: "Gradare finalizată",
+      description: `Comanda #${orderId} a fost finalizată cu succes.`,
     });
   };
 
   const handleRejectOrder = (orderId: string) => {
     const updatedOrders = orders.map(order => 
       order.id === orderId 
-        ? { ...order, status: "rejected" as const }
+        ? { ...order, status: "rejected" }
         : order
     );
     setOrders(updatedOrders);
+    updateLocalStorage(orderId, "rejected");
 
-    // Update localStorage with the new status
+    toast({
+      title: "Comandă respinsă",
+      description: `Comanda #${orderId} a fost respinsă.`,
+      variant: "destructive",
+    });
+  };
+
+  const updateLocalStorage = (orderId: string, newStatus: string) => {
     const storedOrders = localStorage.getItem('gradingOrders');
     if (storedOrders) {
       const parsedOrders = JSON.parse(storedOrders);
       const updatedStoredOrders = parsedOrders.map((order: any, index: number) => {
         if ((index + 1).toString() === orderId) {
-          return { ...order, status: "rejected" };
+          return { ...order, status: newStatus };
         }
         return order;
       });
       localStorage.setItem('gradingOrders', JSON.stringify(updatedStoredOrders));
     }
-
-    toast({
-      title: "Order Rejected",
-      description: `Order #${orderId} has been rejected.`,
-      variant: "destructive",
-    });
   };
 
-  // Filter orders based on whether we're showing all orders or just pending ones
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case "completed":
+        return "default";
+      case "rejected":
+        return "destructive";
+      case "queued":
+        return "secondary";
+      default:
+        return "outline";
+    }
+  };
+
   const displayedOrders = showAll 
-    ? orders 
-    : orders.filter(order => order.status === "pending");
+    ? orders.filter(order => order.status === "completed" || order.status === "rejected")
+    : orders.filter(order => order.status === "pending" || order.status === "queued");
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{showAll ? "Grading History" : "Recent Orders"}</CardTitle>
+        <CardTitle>{showAll ? "Istoric Gradări" : "Comenzi Active"}</CardTitle>
       </CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Order ID</TableHead>
-              <TableHead>Customer</TableHead>
-              <TableHead>Cards</TableHead>
+              <TableHead>ID Comandă</TableHead>
+              <TableHead>Client</TableHead>
+              <TableHead>Cărți</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Date</TableHead>
+              <TableHead>Dată</TableHead>
               <TableHead>Total</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead>Acțiuni</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -143,15 +160,7 @@ export function DataTable({ showAll = false }: DataTableProps) {
                 <TableCell>{order.customer}</TableCell>
                 <TableCell>{order.cards}</TableCell>
                 <TableCell>
-                  <Badge
-                    variant={
-                      order.status === "completed"
-                        ? "default"
-                        : order.status === "rejected"
-                        ? "destructive"
-                        : "secondary"
-                    }
-                  >
+                  <Badge variant={getStatusBadgeVariant(order.status)}>
                     {order.status}
                   </Badge>
                 </TableCell>
@@ -171,10 +180,10 @@ export function DataTable({ showAll = false }: DataTableProps) {
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          className="text-green-600"
-                          onClick={() => handleApproveOrder(order.id)}
+                          className="text-blue-600"
+                          onClick={() => moveToQueue(order.id)}
                         >
-                          <CheckCircle className="h-4 w-4" />
+                          <Clock className="h-4 w-4" />
                         </Button>
                         <Button 
                           variant="ghost" 
@@ -185,6 +194,16 @@ export function DataTable({ showAll = false }: DataTableProps) {
                           <XCircle className="h-4 w-4" />
                         </Button>
                       </>
+                    )}
+                    {order.status === "queued" && (
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="text-green-600"
+                        onClick={() => markAsCompleted(order.id)}
+                      >
+                        <CheckCircle className="h-4 w-4" />
+                      </Button>
                     )}
                   </div>
                 </TableCell>
