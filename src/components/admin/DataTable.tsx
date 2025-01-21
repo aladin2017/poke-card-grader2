@@ -112,15 +112,12 @@ export function DataTable({ showAll = false }: DataTableProps) {
   };
 
   const moveToQueue = (orderId: string) => {
-    // Get all existing EAN8s first
     const existingEAN8s = orders.flatMap(order => 
       order.cards.map(card => card.ean8 || '')
     ).filter(Boolean);
 
-    // Update orders with new status and generate EAN8s
     const updatedOrders = orders.map(order => {
       if (order.id === orderId) {
-        // Generate unique EAN8 for each card
         const updatedCards = order.cards.map(card => ({
           ...card,
           status: "queued" as const,
@@ -136,11 +133,9 @@ export function DataTable({ showAll = false }: DataTableProps) {
       return order;
     });
 
-    // Update state and localStorage
     setOrders(updatedOrders);
     localStorage.setItem('gradingOrders', JSON.stringify(updatedOrders));
 
-    // Show success toast
     toast({
       title: "Comandă în procesare",
       description: `Comanda #${orderId} a fost mutată în coada de gradare.`,
