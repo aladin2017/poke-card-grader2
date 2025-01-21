@@ -43,7 +43,6 @@ const formSchema = z.object({
   shipping: z.string({
     required_error: "Vă rugăm selectați o metodă de expediere.",
   }),
-  // Billing/Shipping details
   fullName: z.string().min(2, {
     message: "Numele trebuie să aibă cel puțin 2 caractere.",
   }),
@@ -125,7 +124,6 @@ export function GradingForm() {
   }
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    // Here we'll add Stripe integration later
     console.log(values)
     toast({
       title: "Comandă trimisă cu succes!",
