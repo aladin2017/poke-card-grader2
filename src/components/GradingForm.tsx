@@ -29,8 +29,8 @@ const cardSchema = z.object({
   name: z.string().min(2, {
     message: "Numele cartonașului trebuie să aibă cel puțin 2 caractere.",
   }),
-  series: z.string().regex(/^[A-Za-z0-9]+\/[A-Za-z0-9]+$/, {
-    message: "Seria trebuie să fie în format corect (ex: A120/220HW, GW304/PH234).",
+  series: z.string().min(2, {
+    message: "Seria trebuie să aibă cel puțin 2 caractere.",
   }),
   set: z.string().min(2, {
     message: "Setul trebuie să aibă cel puțin 2 caractere.",
@@ -264,7 +264,7 @@ export function GradingForm() {
                           <FormItem>
                             <FormLabel>Seria cartonașului</FormLabel>
                             <FormControl>
-                              <Input placeholder="Ex: A120/220HW" {...field} />
+                              <Input placeholder="Ex: GW304/PH234" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
