@@ -53,16 +53,6 @@ export const Header = () => {
                 Acasă
               </Link>
             </NavigationMenuItem>
-            <NavigationMenuItem>
-              <Link 
-                to="/admin" 
-                className={`px-4 py-2 rounded-md transition-colors ${
-                  isScrolled ? 'text-secondary hover:text-secondary/80' : 'text-primary hover:text-primary/80'
-                }`}
-              >
-                Admin
-              </Link>
-            </NavigationMenuItem>
           </NavigationMenuList>
         </NavigationMenu>
       </div>
