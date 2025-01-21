@@ -17,7 +17,7 @@ export const Footer = () => {
       <div className="container mx-auto max-w-7xl">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-12">
           {/* Company Info - Spans 4 columns */}
-          <div className="md:col-span-4 space-y-6">
+          <div className="md:col-span-4 space-y-4">
             <div className="flex items-center">
               {logo ? (
                 <img src={logo} alt="Footer Logo" className="w-36 h-24 object-contain" />
@@ -28,7 +28,7 @@ export const Footer = () => {
             <p className="text-gray-400 text-base leading-relaxed">
               Professional trading card grading services with industry-leading technology and expert evaluation. Your cards deserve the best care and certification.
             </p>
-            <div className="space-y-4 text-gray-400">
+            <div className="flex flex-col gap-2 text-gray-400">
               <div className="flex items-center space-x-3 hover:text-green-500 transition-colors">
                 <span className="text-xl">📧</span>
                 <a href="mailto:contact@abcgrading.com" className="text-base">contact@abcgrading.com</a>
@@ -98,6 +98,7 @@ export const Footer = () => {
               <li className="hover:text-green-500 transition-colors cursor-pointer">FAQ</li>
             </ul>
           </div>
+
         </div>
 
         {/* Copyright */}
