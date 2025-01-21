@@ -22,19 +22,19 @@ export default {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
-        background: "#1A1F2C",
-        foreground: "#F1F1F1",
+        background: "#222222",
+        foreground: "#FFFFFF",
         primary: {
-          DEFAULT: "#403E43",
-          foreground: "#ffffff",
+          DEFAULT: "#D946EF",
+          foreground: "#FFFFFF",
         },
         secondary: {
-          DEFAULT: "#C8C8C9",
-          foreground: "#1A1F2C",
+          DEFAULT: "#F2FCE2",
+          foreground: "#222222",
         },
         accent: {
           DEFAULT: "#333333",
-          foreground: "#F1F1F1",
+          foreground: "#FFFFFF",
         },
       },
       fontFamily: {
