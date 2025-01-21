@@ -22,26 +22,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-
-interface QueueItem {
-  id: string;
-  cardName: string;
-  condition: string;
-  customer: string;
-  priority: "high" | "normal";
-  status: "queued" | "in_progress" | "completed";
-  ean8: string;
-  orderId: string;
-  gradingDetails?: {
-    centering: number;
-    surfaces: number;
-    edges: number;
-    corners: number;
-    finalGrade: number;
-    frontImage?: string;
-    backImage?: string;
-  };
-}
+import { QueueItem } from "@/types/grading";
 
 const getGradeColor = (grade: number) => {
   if (grade >= 9) return "text-green-500";
@@ -49,9 +30,7 @@ const getGradeColor = (grade: number) => {
   return "text-red-500";
 };
 
-// Function to generate a valid EAN8 number
 const generateEAN8 = (existingEAN8s: string[]): string => {
-  // Generate 7 random digits (the 8th will be the check digit)
   const generateNumber = () => {
     let num = '';
     for(let i = 0; i < 7; i++) {
@@ -60,7 +39,6 @@ const generateEAN8 = (existingEAN8s: string[]): string => {
     return num;
   };
 
-  // Calculate check digit according to EAN8 algorithm
   const calculateCheckDigit = (digits: string): number => {
     let sum = 0;
     for(let i = 0; i < digits.length; i++) {
@@ -71,15 +49,12 @@ const generateEAN8 = (existingEAN8s: string[]): string => {
     return checkDigit;
   };
 
-  // Generate unique EAN8
   const generateUniqueEAN8 = (): string => {
     const digits = generateNumber();
     const checkDigit = calculateCheckDigit(digits);
     const ean8 = digits + checkDigit;
     
-    // Check if this EAN8 is already used
     if (existingEAN8s.includes(ean8)) {
-      // If used, generate a new one recursively
       return generateUniqueEAN8();
     }
     return ean8;
@@ -124,7 +99,6 @@ export function GradingQueue() {
     },
   ]);
 
-  // Group items by customer
   const customerGroups = queueItems.reduce((groups: { [key: string]: QueueItem[] }, item) => {
     if (!groups[item.customer]) {
       groups[item.customer] = [];
