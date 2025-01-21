@@ -23,6 +23,28 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { QueueItem } from "@/types/grading";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const gradeScales = [
+  { value: "10+", label: "Pristine (10+)" },
+  { value: "10", label: "Gem-Mint (10)" },
+  { value: "9", label: "Mint (9)" },
+  { value: "8", label: "Near Mint-Mint (8)" },
+  { value: "7", label: "Near Mint (7)" },
+  { value: "6", label: "Excellent-Mint (6)" },
+  { value: "5", label: "Excellent (5)" },
+  { value: "4", label: "Very Good-Excellent (4)" },
+  { value: "3", label: "Very Good (3)" },
+  { value: "2", label: "Good (2)" },
+  { value: "1.5", label: "Fair (1.5)" },
+  { value: "1", label: "Poor (1)" }
+];
 
 const getGradeColor = (grade: number) => {
   if (grade >= 9) return "text-green-500";
@@ -154,14 +176,9 @@ export function GradingQueue() {
     const [surfaces, setSurfaces] = useState<number>(0);
     const [edges, setEdges] = useState<number>(0);
     const [corners, setCorners] = useState<number>(0);
+    const [finalGrade, setFinalGrade] = useState<string>("");
     const [frontImage, setFrontImage] = useState<string>("");
     const [backImage, setBackImage] = useState<string>("");
-
-    const calculateFinalGrade = () => {
-      const grades = [centering, surfaces, edges, corners];
-      const sum = grades.reduce((acc, curr) => acc + curr, 0);
-      return Number((sum / grades.length).toFixed(2));
-    };
 
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, side: 'front' | 'back') => {
       const file = e.target.files?.[0];
@@ -180,13 +197,21 @@ export function GradingQueue() {
 
     const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault();
-      const finalGrade = calculateFinalGrade();
+      if (!finalGrade) {
+        toast({
+          variant: "destructive",
+          title: "Eroare",
+          description: "Vă rugăm să selectați o notă finală.",
+        });
+        return;
+      }
+
       handleGradingSubmit(item.id, {
         centering,
         surfaces,
         edges,
         corners,
-        finalGrade,
+        finalGrade: parseFloat(finalGrade),
         frontImage,
         backImage,
       });
@@ -249,6 +274,22 @@ export function GradingQueue() {
           </div>
         </div>
 
+        <div className="space-y-2">
+          <Label htmlFor="finalGrade">Notă finală</Label>
+          <Select onValueChange={setFinalGrade} value={finalGrade}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selectați nota finală" />
+            </SelectTrigger>
+            <SelectContent>
+              {gradeScales.map((grade) => (
+                <SelectItem key={grade.value} value={grade.value}>
+                  {grade.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="frontImage">Front Image</Label>
@@ -293,12 +334,6 @@ export function GradingQueue() {
         </div>
         
         <div className="pt-4 border-t">
-          <div className="flex justify-between items-center mb-4">
-            <span className="font-semibold">Final Grade:</span>
-            <span className={cn("text-xl font-bold", getGradeColor(calculateFinalGrade()))}>
-              {calculateFinalGrade()}
-            </span>
-          </div>
           <Button type="submit" className="w-full">Save Grading Details</Button>
         </div>
       </form>
