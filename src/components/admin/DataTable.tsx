@@ -31,11 +31,9 @@ export function DataTable({ showAll = false }: DataTableProps) {
   const [orders, setOrders] = useState<Order[]>([]);
 
   useEffect(() => {
-    // Get orders from localStorage
     const storedOrders = localStorage.getItem('gradingOrders');
     if (storedOrders) {
       const parsedOrders = JSON.parse(storedOrders);
-      // Transform the grading form data into the Order format
       const formattedOrders = parsedOrders.map((order: any, index: number) => ({
         id: (index + 1).toString(),
         customer: `${order.fullName}`,
