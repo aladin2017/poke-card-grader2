@@ -26,11 +26,20 @@ import {
 import { Progress } from "@/components/ui/progress"
 
 const cardSchema = z.object({
-  description: z.string().min(10, {
-    message: "Descrierea trebuie să aibă cel puțin 10 caractere.",
+  name: z.string().min(2, {
+    message: "Numele cartonașului trebuie să aibă cel puțin 2 caractere.",
   }),
-  condition: z.string().min(1, {
-    message: "Vă rugăm selectați starea cartonașului.",
+  series: z.string().min(2, {
+    message: "Seria trebuie să aibă cel puțin 2 caractere.",
+  }),
+  set: z.string().min(2, {
+    message: "Setul trebuie să aibă cel puțin 2 caractere.",
+  }),
+  year: z.string().min(4, {
+    message: "Anul trebuie să aibă 4 caractere.",
+  }),
+  language: z.string().min(2, {
+    message: "Limba trebuie să aibă cel puțin 2 caractere.",
   }),
 })
 
@@ -86,7 +95,7 @@ export function GradingForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      cards: [{ description: "", condition: "" }],
+      cards: [{ name: "", series: "", set: "", year: "", language: "" }],
       package: "",
       shipping: "",
       fullName: "",
@@ -237,19 +246,15 @@ export function GradingForm() {
               {fields.map((field, index) => (
                 <Card key={field.id} className="border-primary/20">
                   <CardContent className="pt-6">
-                    <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
-                        name={`cards.${index}.description`}
+                        name={`cards.${index}.name`}
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Descriere cartonaș #{index + 1}</FormLabel>
+                            <FormLabel>Nume cartonaș #{index + 1}</FormLabel>
                             <FormControl>
-                              <Textarea 
-                                placeholder="Descrieți cartonașul (nume, serie, stare etc.)"
-                                className="resize-none"
-                                {...field}
-                              />
+                              <Input placeholder="Ex: Charizard" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -257,23 +262,52 @@ export function GradingForm() {
                       />
                       <FormField
                         control={form.control}
-                        name={`cards.${index}.condition`}
+                        name={`cards.${index}.series`}
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Starea cartonașului</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Selectați starea" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="mint">Mint (Perfect)</SelectItem>
-                                <SelectItem value="near_mint">Near Mint (Aproape Perfect)</SelectItem>
-                                <SelectItem value="excellent">Excellent (Excelent)</SelectItem>
-                                <SelectItem value="good">Good (Bun)</SelectItem>
-                              </SelectContent>
-                            </Select>
+                            <FormLabel>Serie</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Ex: Base Set" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={`cards.${index}.set`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Set</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Ex: Sword & Shield" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={`cards.${index}.year`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>An</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Ex: 1999" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={`cards.${index}.language`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Limbă</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Ex: Engleză" {...field} />
+                            </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -295,12 +329,12 @@ export function GradingForm() {
                   </CardContent>
                 </Card>
               ))}
-              
+
               <div className="flex flex-col gap-4">
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => append({ description: "", condition: "" })}
+                  onClick={() => append({ name: "", series: "", set: "", year: "", language: "" })}
                   className="w-full"
                   disabled={isSubmitting}
                 >
