@@ -17,6 +17,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 
 interface Order {
@@ -88,11 +89,11 @@ export function DataTable({ showAll = false }: DataTableProps) {
         cards: order.cards.map((card: any) => ({
           name: card.name || 'Unnamed Card',
           condition: card.condition || 'Unknown',
-          status: order.status || "pending",
-          priority: "normal",
+          status: "pending" as const,
+          priority: "normal" as const,
           notes: card.notes
         })),
-        status: (order.status as Order['status']) || "pending",
+        status: "pending" as const,
         date: new Date().toISOString().split('T')[0],
         total: calculateTotal(order.package, order.cards.length),
       }));
@@ -117,23 +118,25 @@ export function DataTable({ showAll = false }: DataTableProps) {
 
     const updatedOrders = orders.map(order => {
       if (order.id === orderId) {
+        // Generate unique EAN8 for each card in the order
         const updatedCards = order.cards.map(card => ({
           ...card,
           status: "queued" as const,
           ean8: generateEAN8(existingEAN8s)
         }));
-        return { 
-          ...order, 
+        
+        return {
+          ...order,
           status: "queued" as const,
           cards: updatedCards
         };
       }
       return order;
     });
-    
+
     setOrders(updatedOrders);
-    updateLocalStorage(orderId, "queued", updatedOrders);
-    
+    localStorage.setItem('gradingOrders', JSON.stringify(updatedOrders));
+
     toast({
       title: "Comandă în procesare",
       description: `Comanda #${orderId} a fost mutată în coada de gradare.`,
@@ -157,7 +160,7 @@ export function DataTable({ showAll = false }: DataTableProps) {
     });
     
     setOrders(updatedOrders);
-    updateLocalStorage(orderId, "completed", updatedOrders);
+    localStorage.setItem('gradingOrders', JSON.stringify(updatedOrders));
 
     toast({
       title: "Gradare finalizată",
@@ -182,17 +185,13 @@ export function DataTable({ showAll = false }: DataTableProps) {
     });
     
     setOrders(updatedOrders);
-    updateLocalStorage(orderId, "rejected", updatedOrders);
+    localStorage.setItem('gradingOrders', JSON.stringify(updatedOrders));
 
     toast({
       title: "Comandă respinsă",
       description: `Comanda #${orderId} a fost respinsă.`,
       variant: "destructive",
     });
-  };
-
-  const updateLocalStorage = (orderId: string, newStatus: Order['status'], updatedOrders: Order[]) => {
-    localStorage.setItem('gradingOrders', JSON.stringify(updatedOrders));
   };
 
   const getStatusBadgeVariant = (status: Order['status']) => {
@@ -293,9 +292,11 @@ export function DataTable({ showAll = false }: DataTableProps) {
           <DialogContent className="max-w-3xl">
             <DialogHeader>
               <DialogTitle>Detalii Comandă #{selectedOrder?.id}</DialogTitle>
+              <DialogDescription>
+                Client: {selectedOrder?.customer}
+              </DialogDescription>
             </DialogHeader>
             <div className="mt-4">
-              <h3 className="font-medium mb-2">Client: {selectedOrder?.customer}</h3>
               <Table>
                 <TableHeader>
                   <TableRow>
