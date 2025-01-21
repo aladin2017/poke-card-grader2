@@ -18,13 +18,11 @@ export const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-12">
           {/* Company Info - Spans 4 columns */}
           <div className="md:col-span-4 space-y-6">
-            <div className="flex items-center space-x-3">
-              <div className="text-pink-500 font-bold text-2xl">ABC</div>
-              <div className="text-green-500 font-bold text-2xl">Grading</div>
+            <div className="flex items-center">
               {logo ? (
-                <img src={logo} alt="Footer Logo" className="w-16 h-16 object-contain ml-4" />
+                <img src={logo} alt="Footer Logo" className="w-48 h-32 object-contain" />
               ) : (
-                <Image className="w-16 h-16 text-primary ml-4" />
+                <Image className="w-48 h-32 text-primary" />
               )}
             </div>
             <p className="text-gray-400 text-base leading-relaxed">
@@ -100,6 +98,7 @@ export const Footer = () => {
               <li className="hover:text-green-500 transition-colors cursor-pointer">FAQ</li>
             </ul>
           </div>
+
         </div>
 
         {/* Copyright */}
