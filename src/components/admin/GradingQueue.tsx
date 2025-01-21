@@ -30,6 +30,7 @@ interface QueueItem {
   customer: string;
   priority: "high" | "normal";
   status: "queued" | "in_progress" | "completed";
+  ean8?: string;
   gradingDetails?: {
     centering: number;
     surfaces: number;
@@ -61,11 +62,51 @@ export function GradingQueue() {
     },
   ]);
 
+  // Function to generate a valid EAN8 number
+  const generateEAN8 = (): string => {
+    // Generate 7 random digits (the 8th will be the check digit)
+    const generateNumber = () => {
+      let num = '';
+      for(let i = 0; i < 7; i++) {
+        num += Math.floor(Math.random() * 10);
+      }
+      return num;
+    };
+
+    // Calculate check digit according to EAN8 algorithm
+    const calculateCheckDigit = (digits: string): number => {
+      let sum = 0;
+      for(let i = 0; i < digits.length; i++) {
+        const digit = parseInt(digits[i]);
+        sum += digit * (i % 2 === 0 ? 3 : 1);
+      }
+      const checkDigit = (10 - (sum % 10)) % 10;
+      return checkDigit;
+    };
+
+    // Generate unique EAN8
+    const generateUniqueEAN8 = (): string => {
+      const digits = generateNumber();
+      const checkDigit = calculateCheckDigit(digits);
+      const ean8 = digits + checkDigit;
+      
+      // Check if this EAN8 is already used
+      const isUsed = queueItems.some(item => item.ean8 === ean8);
+      if (isUsed) {
+        // If used, generate a new one recursively
+        return generateUniqueEAN8();
+      }
+      return ean8;
+    };
+
+    return generateUniqueEAN8();
+  };
+
   const handleStartGrading = (itemId: string) => {
     setQueueItems(items =>
       items.map(item =>
         item.id === itemId
-          ? { ...item, status: "in_progress" }
+          ? { ...item, status: "in_progress", ean8: generateEAN8() }
           : item
       )
     );
@@ -73,6 +114,12 @@ export function GradingQueue() {
       title: "Grading Started",
       description: `Started grading process for card ${itemId}`,
     });
+  };
+
+  const getGradeColor = (grade: number) => {
+    if (grade >= 9) return "text-green-500";
+    if (grade >= 7) return "text-yellow-500";
+    return "text-red-500";
   };
 
   const handleMarkComplete = (itemId: string) => {
@@ -101,12 +148,6 @@ export function GradingQueue() {
       title: "Grading Details Saved",
       description: `Grading details for card ${itemId} have been saved successfully`,
     });
-  };
-
-  const getGradeColor = (grade: number) => {
-    if (grade >= 9) return "text-green-500";
-    if (grade >= 7) return "text-yellow-500";
-    return "text-red-500";
   };
 
   const GradingForm = ({ item }: { item: QueueItem }) => {
@@ -217,6 +258,7 @@ export function GradingQueue() {
               <TableHead>Customer</TableHead>
               <TableHead>Priority</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>EAN8</TableHead>
               <TableHead>Grade</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
@@ -246,6 +288,11 @@ export function GradingQueue() {
                   >
                     {item.status.replace("_", " ")}
                   </Badge>
+                </TableCell>
+                <TableCell>
+                  {item.ean8 && (
+                    <span className="font-mono">{item.ean8}</span>
+                  )}
                 </TableCell>
                 <TableCell>
                   {item.gradingDetails && (
