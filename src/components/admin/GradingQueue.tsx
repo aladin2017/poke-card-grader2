@@ -41,6 +41,7 @@ interface QueueItem {
 
 export function GradingQueue() {
   const { toast } = useToast();
+  
   const [queueItems, setQueueItems] = useState<QueueItem[]>([
     {
       id: "1",
@@ -102,6 +103,12 @@ export function GradingQueue() {
     });
   };
 
+  const getGradeColor = (grade: number) => {
+    if (grade >= 9) return "text-green-500";
+    if (grade >= 7) return "text-yellow-500";
+    return "text-red-500";
+  };
+
   const GradingForm = ({ item }: { item: QueueItem }) => {
     const [centering, setCentering] = useState<number>(0);
     const [surfaces, setSurfaces] = useState<number>(0);
@@ -124,12 +131,6 @@ export function GradingQueue() {
         corners,
         finalGrade,
       });
-    };
-
-    const getGradeColor = (grade: number) => {
-      if (grade >= 9) return "text-green-500";
-      if (grade >= 7) return "text-yellow-500";
-      return "text-red-500";
     };
 
     return (
