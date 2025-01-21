@@ -10,8 +10,27 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 export function Settings() {
+  const { toast } = useToast();
+  const [settings, setSettings] = useState({
+    companyName: "",
+    currency: "eur",
+    emailNotifications: false,
+    gradingScale: "1-10",
+    queueCapacity: "50"
+  });
+
+  const handleSaveSettings = () => {
+    // Here you would typically save to a backend
+    toast({
+      title: "Settings Saved",
+      description: "Your settings have been successfully updated.",
+    });
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -21,11 +40,24 @@ export function Settings() {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label>Company Name</Label>
-            <Input placeholder="Your Company Name" />
+            <Input 
+              placeholder="Your Company Name" 
+              value={settings.companyName}
+              onChange={(e) => setSettings(prev => ({
+                ...prev,
+                companyName: e.target.value
+              }))}
+            />
           </div>
           <div className="space-y-2">
             <Label>Default Currency</Label>
-            <Select defaultValue="eur">
+            <Select 
+              value={settings.currency}
+              onValueChange={(value) => setSettings(prev => ({
+                ...prev,
+                currency: value
+              }))}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select currency" />
               </SelectTrigger>
@@ -38,7 +70,13 @@ export function Settings() {
           </div>
           <div className="flex items-center justify-between">
             <Label>Email Notifications</Label>
-            <Switch />
+            <Switch 
+              checked={settings.emailNotifications}
+              onCheckedChange={(checked) => setSettings(prev => ({
+                ...prev,
+                emailNotifications: checked
+              }))}
+            />
           </div>
         </CardContent>
       </Card>
@@ -50,7 +88,13 @@ export function Settings() {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label>Default Grading Scale</Label>
-            <Select defaultValue="1-10">
+            <Select 
+              value={settings.gradingScale}
+              onValueChange={(value) => setSettings(prev => ({
+                ...prev,
+                gradingScale: value
+              }))}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select scale" />
               </SelectTrigger>
@@ -62,10 +106,18 @@ export function Settings() {
           </div>
           <div className="space-y-2">
             <Label>Queue Capacity</Label>
-            <Input type="number" placeholder="50" />
+            <Input 
+              type="number" 
+              placeholder="50"
+              value={settings.queueCapacity}
+              onChange={(e) => setSettings(prev => ({
+                ...prev,
+                queueCapacity: e.target.value
+              }))}
+            />
           </div>
           <div className="pt-4">
-            <Button>Save Settings</Button>
+            <Button onClick={handleSaveSettings}>Save Settings</Button>
           </div>
         </CardContent>
       </Card>
