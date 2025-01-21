@@ -1,4 +1,13 @@
 import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { GradingForm } from "./GradingForm";
 
 export const Hero = () => {
   return (
@@ -13,9 +22,24 @@ export const Hero = () => {
           Expertiza profesională pentru evaluarea și autentificarea colecției tale de cartonașe.
           Servicii de încredere, rapoarte detaliate și manipulare atentă.
         </p>
-        <Button size="lg" className="animate-fade-up">
-          Începe Gradarea
-        </Button>
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button size="lg" className="animate-fade-up">
+              Începe Gradarea
+            </Button>
+          </SheetTrigger>
+          <SheetContent className="overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle>Începe Procesul de Gradare</SheetTitle>
+              <SheetDescription>
+                Completează formularul de mai jos și te vom contacta pentru detalii.
+              </SheetDescription>
+            </SheetHeader>
+            <div className="mt-6">
+              <GradingForm />
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
     </div>
   );
