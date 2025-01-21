@@ -59,11 +59,26 @@ export function DataTable({ showAll = false }: DataTableProps) {
   };
 
   const handleApproveOrder = (orderId: string) => {
-    setOrders(orders.map(order => 
+    const updatedOrders = orders.map(order => 
       order.id === orderId 
         ? { ...order, status: "completed" as const }
         : order
-    ));
+    );
+    setOrders(updatedOrders);
+    
+    // Update localStorage with the new status
+    const storedOrders = localStorage.getItem('gradingOrders');
+    if (storedOrders) {
+      const parsedOrders = JSON.parse(storedOrders);
+      const updatedStoredOrders = parsedOrders.map((order: any, index: number) => {
+        if ((index + 1).toString() === orderId) {
+          return { ...order, status: "completed" };
+        }
+        return order;
+      });
+      localStorage.setItem('gradingOrders', JSON.stringify(updatedStoredOrders));
+    }
+
     toast({
       title: "Order Approved",
       description: `Order #${orderId} has been approved successfully.`,
@@ -71,17 +86,37 @@ export function DataTable({ showAll = false }: DataTableProps) {
   };
 
   const handleRejectOrder = (orderId: string) => {
-    setOrders(orders.map(order => 
+    const updatedOrders = orders.map(order => 
       order.id === orderId 
         ? { ...order, status: "rejected" as const }
         : order
-    ));
+    );
+    setOrders(updatedOrders);
+
+    // Update localStorage with the new status
+    const storedOrders = localStorage.getItem('gradingOrders');
+    if (storedOrders) {
+      const parsedOrders = JSON.parse(storedOrders);
+      const updatedStoredOrders = parsedOrders.map((order: any, index: number) => {
+        if ((index + 1).toString() === orderId) {
+          return { ...order, status: "rejected" };
+        }
+        return order;
+      });
+      localStorage.setItem('gradingOrders', JSON.stringify(updatedStoredOrders));
+    }
+
     toast({
       title: "Order Rejected",
       description: `Order #${orderId} has been rejected.`,
       variant: "destructive",
     });
   };
+
+  // Filter orders based on whether we're showing all orders or just pending ones
+  const displayedOrders = showAll 
+    ? orders 
+    : orders.filter(order => order.status === "pending");
 
   return (
     <Card>
@@ -102,7 +137,7 @@ export function DataTable({ showAll = false }: DataTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {orders.map((order) => (
+            {displayedOrders.map((order) => (
               <TableRow key={order.id}>
                 <TableCell>#{order.id}</TableCell>
                 <TableCell>{order.customer}</TableCell>
