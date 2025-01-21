@@ -40,6 +40,12 @@ interface QueueItem {
   };
 }
 
+const getGradeColor = (grade: number) => {
+  if (grade >= 9) return "text-green-500";
+  if (grade >= 7) return "text-yellow-500";
+  return "text-red-500";
+};
+
 export function GradingQueue() {
   const { toast } = useToast();
   
@@ -114,12 +120,6 @@ export function GradingQueue() {
       title: "Grading Started",
       description: `Started grading process for card ${itemId}`,
     });
-  };
-
-  const getGradeColor = (grade: number) => {
-    if (grade >= 9) return "text-green-500";
-    if (grade >= 7) return "text-yellow-500";
-    return "text-red-500";
   };
 
   const handleMarkComplete = (itemId: string) => {
