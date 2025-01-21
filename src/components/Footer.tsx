@@ -13,79 +13,98 @@ export const Footer = () => {
   }, []);
 
   return (
-    <footer className="w-full bg-black text-white py-12 px-6">
-      <div className="container mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* Company Info */}
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <div className="text-pink-500 font-bold text-xl">ABC</div>
-              <div className="text-green-500 font-bold text-xl">Grading</div>
+    <footer className="w-full bg-black text-white py-16 px-6">
+      <div className="container mx-auto max-w-7xl">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-12">
+          {/* Company Info - Spans 4 columns */}
+          <div className="md:col-span-4 space-y-6">
+            <div className="flex items-center space-x-3">
+              <div className="text-pink-500 font-bold text-2xl">ABC</div>
+              <div className="text-green-500 font-bold text-2xl">Grading</div>
+              {logo ? (
+                <img src={logo} alt="Footer Logo" className="w-16 h-16 object-contain ml-4" />
+              ) : (
+                <Image className="w-16 h-16 text-primary ml-4" />
+              )}
             </div>
-            <p className="text-gray-400 text-sm">
+            <p className="text-gray-400 text-base leading-relaxed">
               Professional trading card grading services with industry-leading technology and expert evaluation. Your cards deserve the best care and certification.
             </p>
-            <div className="space-y-2 text-gray-400 text-sm">
-              <div className="flex items-center space-x-2">
-                <span>📧</span>
-                <span>contact@abcgrading.com</span>
+            <div className="space-y-4 text-gray-400">
+              <div className="flex items-center space-x-3 hover:text-green-500 transition-colors">
+                <span className="text-xl">📧</span>
+                <a href="mailto:contact@abcgrading.com" className="text-base">contact@abcgrading.com</a>
               </div>
-              <div className="flex items-center space-x-2">
-                <span>📞</span>
-                <span>+1 (234) 567-890</span>
+              <div className="flex items-center space-x-3 hover:text-green-500 transition-colors">
+                <span className="text-xl">📞</span>
+                <a href="tel:+12345678901" className="text-base">+1 (234) 567-890</a>
               </div>
-              <div className="flex items-center space-x-2">
-                <span>📍</span>
-                <span>123 Grading Street, Card City</span>
+              <div className="flex items-center space-x-3">
+                <span className="text-xl">📍</span>
+                <span className="text-base">123 Grading Street, Card City</span>
               </div>
             </div>
           </div>
 
-          {/* Services */}
-          <div className="space-y-4">
-            <h3 className="text-green-500 font-semibold text-lg">Services</h3>
-            <ul className="space-y-2 text-gray-400">
-              <li>• Grading Services</li>
-              <li>• Card Verification</li>
-              <li>• Population Report</li>
-              <li>• Grading Scale</li>
+          {/* Services - Spans 3 columns */}
+          <div className="md:col-span-3 space-y-6">
+            <h3 className="text-green-500 font-semibold text-xl">Services</h3>
+            <ul className="space-y-4 text-gray-400">
+              <li className="flex items-center space-x-2 hover:text-green-500 transition-colors cursor-pointer">
+                <span>•</span>
+                <span>Grading Services</span>
+              </li>
+              <li className="flex items-center space-x-2 hover:text-green-500 transition-colors cursor-pointer">
+                <span>•</span>
+                <span>Card Verification</span>
+              </li>
+              <li className="flex items-center space-x-2 hover:text-green-500 transition-colors cursor-pointer">
+                <span>•</span>
+                <span>Population Report</span>
+              </li>
+              <li className="flex items-center space-x-2 hover:text-green-500 transition-colors cursor-pointer">
+                <span>•</span>
+                <span>Grading Scale</span>
+              </li>
             </ul>
           </div>
 
-          {/* Connect */}
-          <div className="space-y-4">
-            <h3 className="text-green-500 font-semibold text-lg">Connect</h3>
-            <div className="flex space-x-4">
-              <Link to="#" className="text-pink-500 hover:text-pink-400">
-                <Facebook className="w-6 h-6" />
+          {/* Connect - Spans 3 columns */}
+          <div className="md:col-span-3 space-y-6">
+            <h3 className="text-green-500 font-semibold text-xl">Connect</h3>
+            <div className="flex space-x-6">
+              <Link to="#" className="text-pink-500 hover:text-pink-400 transition-colors">
+                <Facebook className="w-8 h-8" />
               </Link>
-              <Link to="#" className="text-pink-500 hover:text-pink-400">
-                <Twitter className="w-6 h-6" />
+              <Link to="#" className="text-pink-500 hover:text-pink-400 transition-colors">
+                <Twitter className="w-8 h-8" />
               </Link>
-              <Link to="#" className="text-pink-500 hover:text-pink-400">
-                <Instagram className="w-6 h-6" />
+              <Link to="#" className="text-pink-500 hover:text-pink-400 transition-colors">
+                <Instagram className="w-8 h-8" />
               </Link>
             </div>
-            <ul className="space-y-2 text-gray-400">
-              <li>Terms of Service</li>
-              <li>Privacy Policy</li>
-              <li>Contact Us</li>
+            <ul className="space-y-4 text-gray-400">
+              <li className="hover:text-green-500 transition-colors cursor-pointer">Terms of Service</li>
+              <li className="hover:text-green-500 transition-colors cursor-pointer">Privacy Policy</li>
+              <li className="hover:text-green-500 transition-colors cursor-pointer">Contact Us</li>
             </ul>
           </div>
 
-          {/* Logo Area */}
-          <div className="flex justify-end items-start">
-            {logo ? (
-              <img src={logo} alt="Footer Logo" className="w-12 h-12 object-contain" />
-            ) : (
-              <Image className="w-12 h-12 text-primary" />
-            )}
+          {/* Quick Links - Spans 2 columns */}
+          <div className="md:col-span-2 space-y-6">
+            <h3 className="text-green-500 font-semibold text-xl">Quick Links</h3>
+            <ul className="space-y-4 text-gray-400">
+              <li className="hover:text-green-500 transition-colors cursor-pointer">Home</li>
+              <li className="hover:text-green-500 transition-colors cursor-pointer">About Us</li>
+              <li className="hover:text-green-500 transition-colors cursor-pointer">Blog</li>
+              <li className="hover:text-green-500 transition-colors cursor-pointer">FAQ</li>
+            </ul>
           </div>
         </div>
 
         {/* Copyright */}
-        <div className="mt-8 pt-8 border-t border-gray-800 text-center text-gray-400 text-sm">
-          © 2025 ABC Grading. All rights reserved.
+        <div className="mt-16 pt-8 border-t border-gray-800 text-center text-gray-400">
+          <p className="text-base">© 2025 ABC Grading. All rights reserved.</p>
         </div>
       </div>
     </footer>
