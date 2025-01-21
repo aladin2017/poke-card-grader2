@@ -99,8 +99,8 @@ export function GradingForm() {
   })
 
   const { fields, append, remove } = useFieldArray({
-    name: "cards",
     control: form.control,
+    name: "cards",
   })
 
   const selectedPackage = form.watch("package")
