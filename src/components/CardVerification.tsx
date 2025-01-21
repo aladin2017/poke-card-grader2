@@ -6,35 +6,50 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { QueueItem } from "@/types/grading";
 import { Search } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export const CardVerification = () => {
   const [ean8, setEan8] = useState("");
   const [cardData, setCardData] = useState<QueueItem | null>(null);
+  const [notFound, setNotFound] = useState(false);
   const { toast } = useToast();
 
   const verifyCard = () => {
     if (ean8.length === 8) {
-      const mockData: QueueItem = {
-        id: "1",
-        cardName: "Charizard Base Set",
-        condition: "Near Mint",
-        customer: "John Doe",
-        priority: "high",
-        status: "completed",
-        ean8: ean8,
-        orderId: "order1",
-        gradingDetails: {
-          centering: 9.5,
-          surfaces: 9.0,
-          edges: 9.5,
-          corners: 9.0,
-          finalGrade: 9.5,
-          frontImage: "https://placehold.co/400x600",
-          backImage: "https://placehold.co/400x600"
-        }
-      };
-      setCardData(mockData);
+      // For demo purposes, we'll only return data for "12345678"
+      if (ean8 === "12345678") {
+        const mockData: QueueItem = {
+          id: "1",
+          cardName: "Charizard Base Set",
+          condition: "Near Mint",
+          customer: "John Doe",
+          priority: "high",
+          status: "completed",
+          ean8: ean8,
+          orderId: "order1",
+          gradingDetails: {
+            centering: 9.5,
+            surfaces: 9.0,
+            edges: 9.5,
+            corners: 9.0,
+            finalGrade: 9.5,
+            frontImage: "https://placehold.co/400x600",
+            backImage: "https://placehold.co/400x600"
+          }
+        };
+        setCardData(mockData);
+        setNotFound(false);
+      } else {
+        setCardData(null);
+        setNotFound(true);
+        toast({
+          variant: "destructive",
+          title: "Card Not Found",
+          description: "The certification number you entered was not found in our database.",
+        });
+      }
     } else {
+      setNotFound(false);
       toast({
         variant: "destructive",
         title: "Error",
@@ -73,6 +88,14 @@ export const CardVerification = () => {
           Verify
         </Button>
       </div>
+
+      {notFound && (
+        <Alert className="w-full max-w-xl mx-auto mb-8">
+          <AlertDescription>
+            The certification number you entered was not found in our database. Please check the number and try again.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {cardData && (
         <Card className="w-full max-w-4xl mx-auto animate-fade-up">
