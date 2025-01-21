@@ -34,11 +34,11 @@ export function DataTable({ showAll = false }: DataTableProps) {
     const storedOrders = localStorage.getItem('gradingOrders');
     if (storedOrders) {
       const parsedOrders = JSON.parse(storedOrders);
-      const formattedOrders = parsedOrders.map((order: any, index: number) => ({
+      const formattedOrders: Order[] = parsedOrders.map((order: any, index: number) => ({
         id: (index + 1).toString(),
         customer: `${order.fullName}`,
         cards: order.cards.length,
-        status: order.status || "pending",
+        status: (order.status as Order['status']) || "pending",
         date: new Date().toISOString().split('T')[0],
         total: calculateTotal(order.package, order.cards.length),
       }));
@@ -61,7 +61,7 @@ export function DataTable({ showAll = false }: DataTableProps) {
   const moveToQueue = (orderId: string) => {
     const updatedOrders = orders.map(order => 
       order.id === orderId 
-        ? { ...order, status: "queued" }
+        ? { ...order, status: "queued" as const }
         : order
     );
     setOrders(updatedOrders);
@@ -76,7 +76,7 @@ export function DataTable({ showAll = false }: DataTableProps) {
   const markAsCompleted = (orderId: string) => {
     const updatedOrders = orders.map(order => 
       order.id === orderId 
-        ? { ...order, status: "completed" }
+        ? { ...order, status: "completed" as const }
         : order
     );
     setOrders(updatedOrders);
@@ -91,7 +91,7 @@ export function DataTable({ showAll = false }: DataTableProps) {
   const handleRejectOrder = (orderId: string) => {
     const updatedOrders = orders.map(order => 
       order.id === orderId 
-        ? { ...order, status: "rejected" }
+        ? { ...order, status: "rejected" as const }
         : order
     );
     setOrders(updatedOrders);
@@ -104,7 +104,7 @@ export function DataTable({ showAll = false }: DataTableProps) {
     });
   };
 
-  const updateLocalStorage = (orderId: string, newStatus: string) => {
+  const updateLocalStorage = (orderId: string, newStatus: Order['status']) => {
     const storedOrders = localStorage.getItem('gradingOrders');
     if (storedOrders) {
       const parsedOrders = JSON.parse(storedOrders);
@@ -118,7 +118,7 @@ export function DataTable({ showAll = false }: DataTableProps) {
     }
   };
 
-  const getStatusBadgeVariant = (status: string) => {
+  const getStatusBadgeVariant = (status: Order['status']) => {
     switch (status) {
       case "completed":
         return "default";
