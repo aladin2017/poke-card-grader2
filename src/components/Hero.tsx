@@ -35,7 +35,7 @@ export const Hero = () => {
                 Completează formularul de mai jos și te vom contacta pentru detalii.
               </DialogDescription>
             </DialogHeader>
-            <div className="overflow-y-auto max-h-[60vh] pr-2">
+            <div className="overflow-y-auto max-h-[calc(80vh-10rem)] pr-2">
               <GradingForm />
             </div>
           </DialogContent>
