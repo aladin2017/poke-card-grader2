@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { useState } from "react"
 import { Card, CardContent } from "./ui/card"
-import { Plus, Trash2, ArrowRight, ArrowLeft } from "lucide-react"
+import { Plus, Trash2, ArrowRight, ArrowLeft, Loader2 } from "lucide-react"
 import {
   Select,
   SelectContent,
@@ -81,6 +81,7 @@ const shipping = [
 export function GradingForm() {
   const { toast } = useToast()
   const [step, setStep] = useState(1)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -113,23 +114,91 @@ export function GradingForm() {
     return (packagePrice * cards.length) + shippingPrice
   }
 
+  const validateStep = async (currentStep: number) => {
+    let isValid = true;
+    
+    switch(currentStep) {
+      case 1:
+        isValid = await form.trigger(['cards', 'package', 'shipping']);
+        break;
+      case 2:
+        isValid = await form.trigger([
+          'fullName',
+          'email',
+          'phone',
+          'address',
+          'city',
+          'county',
+          'postalCode'
+        ]);
+        break;
+      default:
+        isValid = true;
+    }
+
+    if (!isValid) {
+      toast({
+        variant: "destructive",
+        title: "Eroare de validare",
+        description: "Vă rugăm să completați toate câmpurile obligatorii corect.",
+      })
+    }
+
+    return isValid;
+  }
+
   const nextStep = async () => {
-    const isValid = await form.trigger()
+    const isValid = await validateStep(step);
     if (isValid) {
-      setStep(prev => prev + 1)
+      setStep(prev => Math.min(prev + 1, 3))
     }
   }
 
   const prevStep = () => {
-    setStep(prev => prev - 1)
+    setStep(prev => Math.max(prev - 1, 1))
+  }
+
+  const goToStep = async (stepNumber: number) => {
+    if (stepNumber < step) {
+      setStep(stepNumber);
+      return;
+    }
+
+    // Validate all steps up to the target step
+    for (let i = 1; i < stepNumber; i++) {
+      const isValid = await validateStep(i);
+      if (!isValid) {
+        return;
+      }
+    }
+    
+    setStep(stepNumber);
   }
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values)
-    toast({
-      title: "Comandă trimisă cu succes!",
-      description: "Vă vom redirecționa către pagina de plată.",
-    })
+    try {
+      setIsSubmitting(true)
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      
+      console.log(values)
+      toast({
+        title: "Comandă trimisă cu succes!",
+        description: "Vă vom redirecționa către pagina de plată.",
+      })
+      
+      // Reset form and go back to step 1
+      form.reset()
+      setStep(1)
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Eroare",
+        description: "A apărut o eroare la trimiterea comenzii. Vă rugăm să încercați din nou.",
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const steps = [
@@ -144,14 +213,19 @@ export function GradingForm() {
         <div className="mb-8">
           <div className="flex justify-between mb-2">
             {steps.map((stepName, idx) => (
-              <span
+              <Button
                 key={stepName}
-                className={`text-sm font-medium ${
-                  step === idx + 1 ? "text-primary" : "text-gray-400"
+                variant="ghost"
+                onClick={() => goToStep(idx + 1)}
+                className={`${
+                  step === idx + 1 
+                    ? "text-primary border-b-2 border-primary rounded-none" 
+                    : "text-gray-400"
                 }`}
+                disabled={isSubmitting}
               >
                 {stepName}
-              </span>
+              </Button>
             ))}
           </div>
           <Progress value={(step / steps.length) * 100} className="h-2" />
@@ -212,6 +286,7 @@ export function GradingForm() {
                         size="sm"
                         className="mt-4 text-red-500 hover:text-red-600 hover:bg-red-50"
                         onClick={() => remove(index)}
+                        disabled={isSubmitting}
                       >
                         <Trash2 className="w-4 h-4 mr-2" />
                         Șterge cartonașul
@@ -227,6 +302,7 @@ export function GradingForm() {
                   variant="outline"
                   onClick={() => append({ description: "", condition: "" })}
                   className="w-full"
+                  disabled={isSubmitting}
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Adaugă cartonaș
@@ -432,19 +508,40 @@ export function GradingForm() {
 
         <div className="flex justify-between pt-4 border-t">
           {step > 1 && (
-            <Button type="button" variant="outline" onClick={prevStep}>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={prevStep}
+              disabled={isSubmitting}
+            >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Înapoi
             </Button>
           )}
           {step < 3 ? (
-            <Button type="button" onClick={nextStep} className={`${step === 1 ? "w-full" : "ml-auto"}`}>
+            <Button 
+              type="button" 
+              onClick={nextStep} 
+              className={`${step === 1 ? "w-full" : "ml-auto"}`}
+              disabled={isSubmitting}
+            >
               Continuă
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           ) : (
-            <Button type="submit" className="ml-auto">
-              Finalizează comanda
+            <Button 
+              type="submit" 
+              className="ml-auto"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Se procesează...
+                </>
+              ) : (
+                "Finalizează comanda"
+              )}
             </Button>
           )}
         </div>
