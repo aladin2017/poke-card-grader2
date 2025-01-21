@@ -1,12 +1,12 @@
 import { Button } from "@/components/ui/button";
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { GradingForm } from "./GradingForm";
 
 export const Hero = () => {
@@ -22,24 +22,24 @@ export const Hero = () => {
           Expertiza profesională pentru evaluarea și autentificarea colecției tale de cartonașe.
           Servicii de încredere, rapoarte detaliate și manipulare atentă.
         </p>
-        <Sheet>
-          <SheetTrigger asChild>
+        <Dialog>
+          <DialogTrigger asChild>
             <Button size="lg" className="animate-fade-up">
               Începe Gradarea
             </Button>
-          </SheetTrigger>
-          <SheetContent className="overflow-y-auto">
-            <SheetHeader>
-              <SheetTitle>Începe Procesul de Gradare</SheetTitle>
-              <SheetDescription>
+          </DialogTrigger>
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Începe Procesul de Gradare</DialogTitle>
+              <DialogDescription>
                 Completează formularul de mai jos și te vom contacta pentru detalii.
-              </SheetDescription>
-            </SheetHeader>
+              </DialogDescription>
+            </DialogHeader>
             <div className="mt-6">
               <GradingForm />
             </div>
-          </SheetContent>
-        </Sheet>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
