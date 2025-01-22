@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { DataTable } from "@/components/admin/DataTable";
@@ -14,31 +13,69 @@ const Admin = () => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("overview");
   const [session, setSession] = useState<any>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
+    // Check session and admin status
+    const checkAuth = async () => {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      
+      if (!currentSession) {
         navigate('/auth');
         return;
       }
-      setSession(session);
-    });
+
+      setSession(currentSession);
+
+      // Check if user is admin
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', currentSession.user.id)
+        .single();
+
+      if (profileError || profileData?.role !== 'admin') {
+        console.error('Not an admin or error:', profileError);
+        toast({
+          variant: "destructive",
+          title: "Access Denied",
+          description: "You must be an admin to access this page.",
+        });
+        navigate('/');
+        return;
+      }
+
+      setIsAdmin(true);
+    };
+
+    checkAuth();
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (!session) {
         navigate('/auth');
         return;
       }
       setSession(session);
+      
+      // Recheck admin status when auth state changes
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
+
+      if (profileData?.role !== 'admin') {
+        navigate('/');
+      }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, toast]);
 
-  if (!session) {
+  if (!session || !isAdmin) {
     return null;
   }
 
