@@ -119,7 +119,9 @@ export function GradingHistory() {
                 <TableCell>
                   {item.card_gradings?.grading_details?.finalGrade || '-'}
                 </TableCell>
-                <TableCell>{item.card_gradings?.ean8 || '-'}</TableCell>
+                <TableCell>
+                  <span className="font-mono">{item.card_gradings?.ean8 || '-'}</span>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
