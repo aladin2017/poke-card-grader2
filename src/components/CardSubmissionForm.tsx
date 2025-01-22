@@ -59,51 +59,49 @@ export function CardSubmissionForm() {
     try {
       setIsSubmitting(true);
 
-      // Create Stripe checkout session
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-checkout`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-          },
-          body: JSON.stringify({
-            serviceType,
-            cards: [{
-              cardName: data.cardName,
-              cardNumber: data.cardNumber,
-              cardSet: data.cardSet,
-            }],
-            shipping: {
-              firstName: data.firstName,
-              lastName: data.lastName,
-              email: data.email,
-              phone: data.phone,
-              addressLine1: data.addressLine1,
-              city: data.city,
-              state: data.state,
-              zipCode: data.zipCode,
-              country: data.country,
-            }
-          }),
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error("You must be logged in to submit cards");
+      }
+
+      const response = await supabase.functions.invoke('create-checkout', {
+        body: {
+          serviceType,
+          cards: [{
+            cardName: data.cardName,
+            cardNumber: data.cardNumber,
+            cardSet: data.cardSet,
+          }],
+          shipping: {
+            firstName: data.firstName,
+            lastName: data.lastName,
+            email: data.email,
+            phone: data.phone,
+            addressLine1: data.addressLine1,
+            city: data.city,
+            state: data.state,
+            zipCode: data.zipCode,
+            country: data.country,
+          }
         }
-      );
+      });
 
-      const { url, error } = await response.json();
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
 
-      if (error) {
-        throw new Error(error);
+      if (!response.data?.url) {
+        throw new Error("No checkout URL returned");
       }
 
       // Redirect to Stripe Checkout
-      window.location.href = url;
+      window.location.href = response.data.url;
     } catch (error) {
       console.error("Form error:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Something went wrong. Please try again.",
+        description: error instanceof Error ? error.message : "Something went wrong. Please try again.",
       });
     } finally {
       setIsSubmitting(false);
@@ -301,4 +299,4 @@ export function CardSubmissionForm() {
       </Form>
     </div>
   );
-}
+});
