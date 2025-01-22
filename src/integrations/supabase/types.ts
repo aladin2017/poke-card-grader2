@@ -9,8 +9,68 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      admin_settings: {
+        Row: {
+          id: string
+          key: string
+          updated_at: string | null
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          id?: string
+          key: string
+          updated_at?: string | null
+          updated_by?: string | null
+          value: Json
+        }
+        Update: {
+          id?: string
+          key?: string
+          updated_at?: string | null
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
+      card_grading_history: {
+        Row: {
+          card_grading_id: string | null
+          changed_at: string | null
+          changed_by: string | null
+          id: string
+          notes: string | null
+          status: Database["public"]["Enums"]["order_status"]
+        }
+        Insert: {
+          card_grading_id?: string | null
+          changed_at?: string | null
+          changed_by?: string | null
+          id?: string
+          notes?: string | null
+          status: Database["public"]["Enums"]["order_status"]
+        }
+        Update: {
+          card_grading_id?: string | null
+          changed_at?: string | null
+          changed_by?: string | null
+          id?: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["order_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_grading_history_card_grading_id_fkey"
+            columns: ["card_grading_id"]
+            isOneToOne: false
+            referencedRelation: "card_gradings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       card_gradings: {
         Row: {
+          back_image_url: string | null
           card_name: string
           card_number: string | null
           created_at: string
@@ -23,18 +83,24 @@ export type Database = {
           customer_state: string | null
           customer_zip: string | null
           ean8: string
+          front_image_url: string | null
+          graded_at: string | null
+          graded_by: string | null
+          grading_details: Json | null
           id: string
           notes: string | null
           order_id: string
-          service_type: string
+          priority: number | null
+          service_type: Database["public"]["Enums"]["service_type"]
           set_name: string | null
-          shipping_method: string
-          status: string
+          shipping_method: Database["public"]["Enums"]["shipping_method"]
+          status: Database["public"]["Enums"]["order_status"]
           user_id: string
           variant: string | null
           year: string | null
         }
         Insert: {
+          back_image_url?: string | null
           card_name: string
           card_number?: string | null
           created_at?: string
@@ -47,18 +113,24 @@ export type Database = {
           customer_state?: string | null
           customer_zip?: string | null
           ean8: string
+          front_image_url?: string | null
+          graded_at?: string | null
+          graded_by?: string | null
+          grading_details?: Json | null
           id?: string
           notes?: string | null
           order_id: string
-          service_type: string
+          priority?: number | null
+          service_type: Database["public"]["Enums"]["service_type"]
           set_name?: string | null
-          shipping_method: string
-          status?: string
+          shipping_method: Database["public"]["Enums"]["shipping_method"]
+          status?: Database["public"]["Enums"]["order_status"]
           user_id: string
           variant?: string | null
           year?: string | null
         }
         Update: {
+          back_image_url?: string | null
           card_name?: string
           card_number?: string | null
           created_at?: string
@@ -71,16 +143,51 @@ export type Database = {
           customer_state?: string | null
           customer_zip?: string | null
           ean8?: string
+          front_image_url?: string | null
+          graded_at?: string | null
+          graded_by?: string | null
+          grading_details?: Json | null
           id?: string
           notes?: string | null
           order_id?: string
-          service_type?: string
+          priority?: number | null
+          service_type?: Database["public"]["Enums"]["service_type"]
           set_name?: string | null
-          shipping_method?: string
-          status?: string
+          shipping_method?: Database["public"]["Enums"]["shipping_method"]
+          status?: Database["public"]["Enums"]["order_status"]
           user_id?: string
           variant?: string | null
           year?: string | null
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string
+          read: boolean | null
+          title: string
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message: string
+          read?: boolean | null
+          title: string
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string
+          read?: boolean | null
+          title?: string
+          type?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -110,9 +217,37 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_grading_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          total_orders: number
+          pending_orders: number
+          completed_orders: number
+          rejected_orders: number
+          avg_completion_time: unknown
+          total_revenue: number
+          orders_this_month: number
+        }[]
+      }
+      get_next_in_queue: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          order_id: string
+          card_name: string
+          priority: number
+        }[]
+      }
     }
     Enums: {
+      order_status:
+        | "pending"
+        | "queued"
+        | "in_progress"
+        | "completed"
+        | "rejected"
+      service_type: "standard" | "express" | "premium"
+      shipping_method: "standard" | "express" | "international"
       user_role: "admin" | "user"
     }
     CompositeTypes: {
