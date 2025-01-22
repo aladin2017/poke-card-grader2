@@ -12,6 +12,14 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+interface GradingDetails {
+  centering: number;
+  surfaces: number;
+  edges: number;
+  corners: number;
+  finalGrade: number;
+}
+
 interface Order {
   id: string;
   order_id: string;
@@ -19,13 +27,7 @@ interface Order {
   service_type: string;
   status: string;
   created_at: string;
-  grading_details: {
-    centering: number;
-    surfaces: number;
-    edges: number;
-    corners: number;
-    finalGrade: number;
-  } | null;
+  grading_details: GradingDetails | null;
   total_amount: number;
 }
 
@@ -48,7 +50,7 @@ const CustomerDashboard = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return orderData || [];
+      return (orderData || []) as Order[];
     },
   });
 

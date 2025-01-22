@@ -13,7 +13,7 @@ interface HeaderProps {
 export const Header = ({ session }: HeaderProps) => {
   const [logo, setLogo] = useState<string>("");
   const [isScrolled, setIsScrolled] = useState(false);
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<"admin" | "customer" | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
