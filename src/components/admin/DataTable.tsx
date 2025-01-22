@@ -51,6 +51,21 @@ export function DataTable({ showAll = false }: DataTableProps) {
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['orders', showAll],
     queryFn: async () => {
+      // First check if user is admin
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .single();
+
+      if (profileError || profileData?.role !== 'admin') {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "You don't have permission to view orders.",
+        });
+        return [];
+      }
+
       const query = supabase
         .from('card_gradings')
         .select('*')
@@ -65,12 +80,13 @@ export function DataTable({ showAll = false }: DataTableProps) {
       const { data, error } = await query;
 
       if (error) {
+        console.error('Error fetching orders:', error);
         toast({
           variant: "destructive",
           title: "Error",
           description: "Failed to fetch orders. Please try again.",
         });
-        throw error;
+        return [];
       }
 
       return (data || []).map(item => ({
