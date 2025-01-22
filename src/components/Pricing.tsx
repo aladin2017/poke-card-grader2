@@ -82,7 +82,7 @@ export const Pricing = () => {
                   className="w-full mt-6"
                   variant="default"
                 >
-                  {plan.name === "STANDARD" ? "Submit Now" : "Purchase Now"}
+                  Submit Now
                 </Button>
               </CardContent>
             </Card>
