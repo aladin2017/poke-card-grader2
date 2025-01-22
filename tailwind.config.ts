@@ -25,36 +25,16 @@ export default {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "#9b87f5",
-          foreground: "#FFFFFF",
+          DEFAULT: "#1a237e",
+          foreground: "#ffffff",
         },
         secondary: {
-          DEFAULT: "#7E69AB",
-          foreground: "#FFFFFF",
+          DEFAULT: "#ffd700",
+          foreground: "#000000",
         },
         accent: {
-          DEFAULT: "#6E59A5",
-          foreground: "#FFFFFF",
-        },
-        muted: {
-          DEFAULT: "#8E9196",
-          foreground: "#FFFFFF",
-        },
-        destructive: {
-          DEFAULT: "#ea384c",
-          foreground: "#FFFFFF",
-        },
-        success: {
-          DEFAULT: "#F2FCE2",
-          foreground: "#1A1F2C",
-        },
-        warning: {
-          DEFAULT: "#FEF7CD",
-          foreground: "#1A1F2C",
-        },
-        info: {
-          DEFAULT: "#D3E4FD",
-          foreground: "#1A1F2C",
+          DEFAULT: "#c0c0c0",
+          foreground: "#000000",
         },
       },
       fontFamily: {
