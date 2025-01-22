@@ -1,51 +1,47 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { OrderList } from "@/components/admin/OrderList";
-import { OrderStats } from "@/components/admin/OrderStats";
-import { GradingProcess } from "@/components/grading/GradingProcess";
-import { GradingOrder } from "@/types/orders";
+import { useToast } from "@/hooks/use-toast";
+import { DataTable } from "@/components/admin/DataTable";
+import { StatsCards } from "@/components/admin/StatsCards";
+import { GradingQueue } from "@/components/admin/GradingQueue";
+import { Settings } from "@/components/admin/Settings";
 
 const Admin = () => {
-  const [orders, setOrders] = useState<GradingOrder[]>([]);
-
-  useEffect(() => {
-    const loadOrders = () => {
-      const storedOrders = localStorage.getItem('gradingOrders');
-      if (storedOrders) {
-        setOrders(JSON.parse(storedOrders));
-      }
-    };
-
-    loadOrders();
-    const interval = setInterval(loadOrders, 30000);
-    return () => clearInterval(interval);
-  }, []);
+  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState("overview");
 
   return (
     <div className="container py-8">
       <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
       
-      <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
+      <Tabs defaultValue="overview" className="space-y-6" onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-4 lg:w-[400px]">
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="orders">Orders</TabsTrigger>
-          <TabsTrigger value="grading">Grading</TabsTrigger>
+          <TabsTrigger value="queue">Queue</TabsTrigger>
+          <TabsTrigger value="history">History</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
-          <OrderStats orders={orders} />
+          <StatsCards />
+          <DataTable />
         </TabsContent>
 
-        <TabsContent value="orders">
-          <OrderList />
+        <TabsContent value="queue">
+          <GradingQueue />
         </TabsContent>
 
-        <TabsContent value="grading">
-          <GradingProcess />
+        <TabsContent value="history">
+          <DataTable showAll />
+        </TabsContent>
+
+        <TabsContent value="settings">
+          <Settings />
         </TabsContent>
       </Tabs>
     </div>
   );
-}
+};
 
 export default Admin;

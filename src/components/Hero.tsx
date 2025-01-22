@@ -7,7 +7,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { NewGradingForm } from "./NewGradingForm";
+import { GradingForm } from "./GradingForm";
 
 export const Hero = () => {
   return (
@@ -36,7 +36,7 @@ export const Hero = () => {
               </DialogDescription>
             </DialogHeader>
             <div className="overflow-y-auto max-h-[calc(85vh-10rem)] pr-2 relative">
-              <NewGradingForm />
+              <GradingForm />
             </div>
           </DialogContent>
         </Dialog>

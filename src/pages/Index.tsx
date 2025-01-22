@@ -2,18 +2,20 @@ import { Hero } from "@/components/Hero";
 import { Process } from "@/components/Process";
 import { Pricing } from "@/components/Pricing";
 import { FAQ } from "@/components/FAQ";
-import { UserRole } from "@/components/UserRole";
+import { PopulationReport } from "@/components/PopulationReport";
+import { CardVerification } from "@/components/CardVerification";
 
-export default function Index() {
+const Index = () => {
   return (
-    <div className="flex flex-col min-h-screen">
-      <div className="flex justify-end p-4">
-        <UserRole />
-      </div>
+    <main className="min-h-screen">
       <Hero />
+      <CardVerification />
       <Process />
+      <PopulationReport />
       <Pricing />
       <FAQ />
-    </div>
+    </main>
   );
-}
+};
+
+export default Index;
