@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { Database } from "@/integrations/supabase/types";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 type OrderStatus = Database["public"]["Enums"]["order_status"];
 
@@ -24,21 +25,11 @@ interface GradingDetails {
   finalGrade: number;
 }
 
-interface CardGrading {
-  card_name: string;
-  order_id: string;
-  customer_name: string;
-  ean8: string;
-  grading_details: GradingDetails | null;
-}
-
-interface HistoryItem {
-  id: string;
-  changed_at: string;
-  status: OrderStatus;
-  notes: string | null;
-  card_gradings: CardGrading | null;
-}
+const getGradeColor = (grade: number) => {
+  if (grade >= 9) return "text-green-500";
+  if (grade >= 7) return "text-yellow-500";
+  return "text-red-500";
+};
 
 export function GradingHistory() {
   const { toast } = useToast();
@@ -64,19 +55,10 @@ export function GradingHistory() {
       }
 
       const { data, error } = await supabase
-        .from('card_grading_history')
-        .select(`
-          *,
-          card_gradings (
-            card_name,
-            order_id,
-            customer_name,
-            ean8,
-            grading_details
-          )
-        `)
+        .from('card_gradings')
+        .select('*')
         .in('status', ['completed', 'rejected'])
-        .order('changed_at', { ascending: false });
+        .order('graded_at', { ascending: false });
 
       if (error) {
         console.error('Error fetching history:', error);
@@ -88,13 +70,7 @@ export function GradingHistory() {
         throw error;
       }
 
-      return (data || []).map(item => ({
-        ...item,
-        card_gradings: item.card_gradings ? {
-          ...item.card_gradings,
-          grading_details: item.card_gradings.grading_details as unknown as GradingDetails | null
-        } : null
-      })) as HistoryItem[];
+      return data || [];
     },
   });
 
@@ -124,11 +100,11 @@ export function GradingHistory() {
             {historyItems.map((item) => (
               <TableRow key={item.id}>
                 <TableCell>
-                  {format(new Date(item.changed_at), 'dd/MM/yyyy HH:mm')}
+                  {item.graded_at ? format(new Date(item.graded_at), 'dd/MM/yyyy HH:mm') : '-'}
                 </TableCell>
-                <TableCell>{item.card_gradings?.order_id}</TableCell>
-                <TableCell>{item.card_gradings?.card_name}</TableCell>
-                <TableCell>{item.card_gradings?.customer_name}</TableCell>
+                <TableCell>{item.order_id}</TableCell>
+                <TableCell>{item.card_name}</TableCell>
+                <TableCell>{item.customer_name}</TableCell>
                 <TableCell>
                   <Badge
                     variant={
@@ -143,10 +119,14 @@ export function GradingHistory() {
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  {item.card_gradings?.grading_details?.finalGrade || '-'}
+                  {item.grading_details && (
+                    <span className={cn("font-bold", getGradeColor(item.grading_details.finalGrade))}>
+                      {item.grading_details.finalGrade}
+                    </span>
+                  )}
                 </TableCell>
                 <TableCell>
-                  <span className="font-mono">{item.card_gradings?.ean8 || '-'}</span>
+                  <span className="font-mono">{item.ean8}</span>
                 </TableCell>
               </TableRow>
             ))}
