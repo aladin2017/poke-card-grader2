@@ -48,10 +48,24 @@ const europeanCountries = [
   { code: "BG", name: "Bulgaria", prefix: "+359", flag: "🇧🇬" },
 ];
 
+const pokemonCardLanguages = [
+  { code: "EN", name: "English", flag: "🇺🇸" },
+  { code: "JP", name: "Japanese", flag: "🇯🇵" },
+  { code: "DE", name: "German", flag: "🇩🇪" },
+  { code: "FR", name: "French", flag: "🇫🇷" },
+  { code: "IT", name: "Italian", flag: "🇮🇹" },
+  { code: "ES", name: "Spanish", flag: "🇪🇸" },
+  { code: "KO", name: "Korean", flag: "🇰🇷" },
+  { code: "CN", name: "Chinese", flag: "🇨🇳" },
+  { code: "PL", name: "Polish", flag: "🇵🇱" },
+  { code: "PT", name: "Portuguese", flag: "🇵🇹" },
+];
+
 const cardSchema = z.object({
   cardName: z.string().min(1, "Card name is required"),
   cardNumber: z.string().min(1, "Card number is required"),
   cardSet: z.string().min(1, "Card set is required"),
+  language: z.string().min(1, "Card language is required"),
 });
 
 const shippingSchema = z.object({
@@ -97,7 +111,7 @@ export function CardSubmissionForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      cards: [{ cardName: "", cardNumber: "", cardSet: "" }],
+      cards: [{ cardName: "", cardNumber: "", cardSet: "", language: "" }],
       shipping: {
         firstName: "",
         lastName: "",
@@ -127,7 +141,7 @@ export function CardSubmissionForm() {
   }, [selectedCountry]);
 
   const addCard = () => {
-    append({ cardName: "", cardNumber: "", cardSet: "" });
+    append({ cardName: "", cardNumber: "", cardSet: "", language: "" });
   };
 
   const removeCard = (index: number) => {
@@ -190,7 +204,7 @@ export function CardSubmissionForm() {
             <Card key={field.id}>
               <CardContent className="pt-6">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-lg font-semibold">Card {index + 1}</h2>
+                  <h2 className="text-lg font-semibold">Card #{index + 1}</h2>
                   {fields.length > 1 && (
                     <Button
                       type="button"
@@ -238,6 +252,37 @@ export function CardSubmissionForm() {
                         <FormControl>
                           <Input placeholder="Base Set" {...field} />
                         </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`cards.${index}.language`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Language</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select language" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {pokemonCardLanguages.map((language) => (
+                              <SelectItem 
+                                key={language.code} 
+                                value={language.code}
+                                className="flex items-center justify-between"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <span className="text-base">{language.flag}</span>
+                                  <span>{language.name}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
