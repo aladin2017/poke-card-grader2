@@ -17,6 +17,36 @@ import { useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Plus, Trash2 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const europeanCountries = [
+  { code: "RO", name: "Romania", prefix: "+40" },
+  { code: "GB", name: "United Kingdom", prefix: "+44" },
+  { code: "DE", name: "Germany", prefix: "+49" },
+  { code: "FR", name: "France", prefix: "+33" },
+  { code: "IT", name: "Italy", prefix: "+39" },
+  { code: "ES", name: "Spain", prefix: "+34" },
+  { code: "PT", name: "Portugal", prefix: "+351" },
+  { code: "NL", name: "Netherlands", prefix: "+31" },
+  { code: "BE", name: "Belgium", prefix: "+32" },
+  { code: "GR", name: "Greece", prefix: "+30" },
+  { code: "SE", name: "Sweden", prefix: "+46" },
+  { code: "DK", name: "Denmark", prefix: "+45" },
+  { code: "FI", name: "Finland", prefix: "+358" },
+  { code: "IE", name: "Ireland", prefix: "+353" },
+  { code: "AT", name: "Austria", prefix: "+43" },
+  { code: "PL", name: "Poland", prefix: "+48" },
+  { code: "HU", name: "Hungary", prefix: "+36" },
+  { code: "CZ", name: "Czech Republic", prefix: "+420" },
+  { code: "SK", name: "Slovakia", prefix: "+421" },
+  { code: "BG", name: "Bulgaria", prefix: "+359" },
+];
 
 const cardSchema = z.object({
   cardName: z.string().min(1, "Card name is required"),
@@ -28,7 +58,8 @@ const shippingSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
   email: z.string().email("Invalid email address"),
-  phone: z.string().min(10, "Phone number must be at least 10 digits"),
+  phonePrefix: z.string().min(1, "Phone prefix is required"),
+  phoneNumber: z.string().min(6, "Phone number must be at least 6 digits"),
   addressLine1: z.string().min(1, "Address line 1 is required"),
   city: z.string().min(1, "City is required"),
   state: z.string().min(1, "State/County is required"),
@@ -52,6 +83,10 @@ const getPricePerCard = (serviceType: string) => {
   return prices[serviceType.toLowerCase()] || 15;
 };
 
+const getShippingCost = (country: string) => {
+  return country === "Romania" ? 6 : 12;
+};
+
 export function CardSubmissionForm() {
   const { toast } = useToast();
   const { serviceType } = useParams();
@@ -66,7 +101,8 @@ export function CardSubmissionForm() {
         firstName: "",
         lastName: "",
         email: "",
-        phone: "",
+        phonePrefix: "",
+        phoneNumber: "",
         addressLine1: "",
         city: "",
         state: "",
@@ -92,7 +128,8 @@ export function CardSubmissionForm() {
   };
 
   const calculateTotal = () => {
-    return fields.length * pricePerCard;
+    const shippingCost = getShippingCost(form.getValues("shipping.country"));
+    return (fields.length * pricePerCard) + shippingCost;
   };
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
@@ -256,19 +293,45 @@ export function CardSubmissionForm() {
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={form.control}
-                    name="shipping.phone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Phone</FormLabel>
-                        <FormControl>
-                          <Input type="tel" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="flex gap-2">
+                    <FormField
+                      control={form.control}
+                      name="shipping.phonePrefix"
+                      render={({ field }) => (
+                        <FormItem className="w-1/3">
+                          <FormLabel>Prefix</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="+" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {europeanCountries.map((country) => (
+                                <SelectItem key={country.code} value={country.prefix}>
+                                  {country.prefix}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="shipping.phoneNumber"
+                      render={({ field }) => (
+                        <FormItem className="flex-1">
+                          <FormLabel>Phone Number</FormLabel>
+                          <FormControl>
+                            <Input type="tel" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                   <FormField
                     control={form.control}
                     name="shipping.addressLine1"
@@ -327,9 +390,20 @@ export function CardSubmissionForm() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Country</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select country" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {europeanCountries.map((country) => (
+                              <SelectItem key={country.code} value={country.name}>
+                                {country.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -351,6 +425,10 @@ export function CardSubmissionForm() {
                   <span>Number of cards:</span>
                   <span>{fields.length}</span>
                 </div>
+                <div className="flex justify-between">
+                  <span>Shipping cost:</span>
+                  <span>{getShippingCost(form.getValues("shipping.country") || "")} €</span>
+                </div>
                 <div className="flex justify-between font-bold text-lg pt-2 border-t">
                   <span>Total:</span>
                   <span>{calculateTotal()} €</span>
@@ -364,7 +442,7 @@ export function CardSubmissionForm() {
             className="w-full"
             disabled={isSubmitting}
           >
-            {isSubmitting ? "Processing..." : "Proceed to Payment"}
+            {isSubmitting ? "Processing..." : `Proceed to Payment (${calculateTotal()} €)`}
           </Button>
         </form>
       </Form>
