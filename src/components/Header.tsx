@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Image, LogIn, LogOut } from "lucide-react";
+import { Image, LogIn, LogOut, LayoutDashboard } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { NavigationMenu, NavigationMenuList } from "@/components/ui/navigation-menu";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ export const Header = () => {
   const [logo, setLogo] = useState<string>("");
   const [isScrolled, setIsScrolled] = useState(false);
   const [session, setSession] = useState<any>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -26,13 +27,31 @@ export const Header = () => {
     window.addEventListener('scroll', handleScroll);
 
     // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
+        setUserRole(profile?.role || null);
+      } else {
+        setUserRole(null);
+      }
     });
 
     // Check current session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
+        setUserRole(profile?.role || null);
+      }
     });
 
     return () => {
@@ -85,6 +104,16 @@ export const Header = () => {
         <div className="flex items-center gap-4">
           <NavigationMenu>
             <NavigationMenuList>
+              {userRole === 'admin' && (
+                <Button
+                  variant="secondary"
+                  onClick={() => navigate('/admin')}
+                  className="flex items-center gap-2"
+                >
+                  <LayoutDashboard className="w-4 h-4" />
+                  Admin Dashboard
+                </Button>
+              )}
             </NavigationMenuList>
           </NavigationMenu>
 
