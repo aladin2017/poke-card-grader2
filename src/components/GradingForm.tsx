@@ -42,8 +42,12 @@ const formSchema = z.object({
   country: z.string().min(2, {
     message: "Țara trebuie să conțină cel puțin 2 caractere.",
   }),
-  serviceType: z.enum(["standard", "medium", "priority"]),
-  shippingMethod: z.enum(["standard", "express"]),
+  serviceType: z.enum(["standard", "medium", "priority"], {
+    required_error: "Vă rugăm să selectați un tip de serviciu.",
+  }),
+  shippingMethod: z.enum(["standard", "express"], {
+    required_error: "Vă rugăm să selectați o metodă de livrare.",
+  }),
   cards: z.array(
     z.object({
       id: z.string(),
@@ -118,63 +122,80 @@ export function GradingForm() {
     return (servicePrice * data.cards.length) + shippingPrice;
   };
 
-  const handleNextStep = async (data: z.infer<typeof formSchema>) => {
-    if (step === 1) {
-      const requiredFields = ['fullName', 'email', 'phone', 'address', 'city', 'state', 'zipCode', 'country'];
-      const missingFields = requiredFields.filter(field => !data[field as keyof typeof data]);
-      
-      if (missingFields.length > 0 || !data.serviceType || !data.shippingMethod) {
-        toast({
-          title: "Validation Error",
-          description: "Please fill in all required fields before proceeding.",
-          variant: "destructive",
-        });
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    try {
+      if (step === 1) {
+        const formData = form.getValues();
+        if (!formData.serviceType || !formData.shippingMethod) {
+          toast({
+            title: "Eroare de validare",
+            description: "Vă rugăm să selectați tipul de serviciu și metoda de livrare.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        await form.trigger(['fullName', 'email', 'phone', 'address', 'city', 'state', 'zipCode', 'country']);
+        const isValid = await form.trigger();
+        
+        if (isValid) {
+          setStep(2);
+        } else {
+          toast({
+            title: "Eroare de validare",
+            description: "Vă rugăm să completați toate câmpurile obligatorii.",
+            variant: "destructive",
+          });
+        }
         return;
       }
-      setStep(2);
-    } else if (step === 2) {
-      const isCardsValid = data.cards.every(card => 
-        card.name && card.year && card.set
-      );
 
-      if (!isCardsValid) {
-        toast({
-          title: "Validation Error",
-          description: "Please fill in all required card information.",
-          variant: "destructive",
-        });
+      if (step === 2) {
+        const isCardsValid = values.cards.every(card => 
+          card.name && card.year && card.set
+        );
+
+        if (!isCardsValid) {
+          toast({
+            title: "Eroare de validare",
+            description: "Vă rugăm să completați toate informațiile necesare pentru cărți.",
+            variant: "destructive",
+          });
+          return;
+        }
+        setStep(3);
         return;
       }
-      setStep(3);
+
+      // Final submission
+      const order = {
+        ...values,
+        status: "pending",
+        createdAt: new Date().toISOString(),
+        totalAmount: calculateTotal(values),
+      };
+
+      localStorage.setItem('gradingOrders', JSON.stringify([
+        ...JSON.parse(localStorage.getItem('gradingOrders') || '[]'),
+        order
+      ]));
+
+      toast({
+        title: "Comandă plasată cu succes!",
+        description: "Vă mulțumim pentru comandă. Veți primi un email de confirmare în curând.",
+      });
+
+      form.reset();
+      setCards([{ id: "1" }]);
+      setStep(1);
+    } catch (error) {
+      console.error('Form submission error:', error);
+      toast({
+        title: "Eroare",
+        description: "A apărut o eroare la procesarea formularului. Vă rugăm să încercați din nou.",
+        variant: "destructive",
+      });
     }
-  };
-
-  const onSubmit = async (data: z.infer<typeof formSchema>) => {
-    if (step < 3) {
-      await handleNextStep(data);
-      return;
-    }
-
-    const order = {
-      ...data,
-      status: "pending",
-      createdAt: new Date().toISOString(),
-      totalAmount: calculateTotal(data),
-    };
-
-    localStorage.setItem('gradingOrders', JSON.stringify([
-      ...JSON.parse(localStorage.getItem('gradingOrders') || '[]'),
-      order
-    ]));
-
-    toast({
-      title: "Comandă plasată cu succes!",
-      description: "Vă mulțumim pentru comandă. Veți primi un email de confirmare în curând.",
-    });
-
-    form.reset();
-    setCards([{ id: "1" }]);
-    setStep(1);
   };
 
   return (
