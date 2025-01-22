@@ -164,6 +164,34 @@ export function GradingQueue({ session }: GradingQueueProps) {
     setIsGradingDialogOpen(true);
   };
 
+  const handleMoveToQueue = async (item: any) => {
+    try {
+      const { error } = await supabase
+        .from('card_gradings')
+        .update({ 
+          status: 'queued',
+          graded_by: session.user.id 
+        })
+        .eq('order_id', item.order_id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Card Moved to Queue",
+        description: `Card ${item.card_name} has been moved to the grading queue.`,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['grading-queue'] });
+    } catch (error) {
+      console.error('Error moving to queue:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to move card to queue. Please try again.",
+      });
+    }
+  };
+
   const GradingForm = ({ item }: { item: any }) => {
     const [centering, setCentering] = useState<number>(0);
     const [surfaces, setSurfaces] = useState<number>(0);
@@ -427,7 +455,7 @@ export function GradingQueue({ session }: GradingQueueProps) {
                         variant={
                           item.status === "completed"
                             ? "default"
-                            : item.status === "in_progress"
+                            : item.status === "queued"
                             ? "secondary"
                             : "outline"
                         }
@@ -447,6 +475,16 @@ export function GradingQueue({ session }: GradingQueueProps) {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
+                        {item.status === "pending" && (
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleMoveToQueue(item)}
+                          >
+                            Move to Queue
+                            <ArrowRight className="ml-2 h-4 w-4" />
+                          </Button>
+                        )}
                         {item.status === "queued" && (
                           <Button 
                             size="sm" 
