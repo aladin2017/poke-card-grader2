@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { DataTable } from "@/components/admin/DataTable";
 import { StatsCards } from "@/components/admin/StatsCards";
 import { GradingQueue } from "@/components/admin/GradingQueue";
+import { GradingHistory } from "@/components/admin/GradingHistory";
 import { Settings } from "@/components/admin/Settings";
 
 const Admin = () => {
@@ -33,7 +34,7 @@ const Admin = () => {
         </TabsContent>
 
         <TabsContent value="history">
-          <DataTable showAll />
+          <GradingHistory />
         </TabsContent>
 
         <TabsContent value="settings">
