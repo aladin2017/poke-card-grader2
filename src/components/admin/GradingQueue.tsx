@@ -11,7 +11,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, CheckCircle, Image } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 
 const gradeScales = [
   { value: "10.5", label: "Pristine (10+)" },
@@ -59,35 +60,63 @@ interface GradingQueueProps {
 export function GradingQueue({ session }: GradingQueueProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [isGradingDialogOpen, setIsGradingDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (!session?.user?.id) {
+        toast({
+          variant: "destructive",
+          title: "Authentication Required",
+          description: "Please sign in to access the grading queue.",
+        });
+        navigate('/auth');
+        return;
+      }
+
+      try {
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
+
+        if (profileError) {
+          throw profileError;
+        }
+
+        if (profileData?.role !== 'admin') {
+          toast({
+            variant: "destructive",
+            title: "Access Denied",
+            description: "You must be an admin to access the grading queue.",
+          });
+          navigate('/');
+          return;
+        }
+
+        setIsAdmin(true);
+      } catch (error: any) {
+        console.error('Error checking admin status:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error.message || "Could not verify admin status.",
+        });
+        navigate('/');
+      }
+    };
+
+    checkAdminStatus();
+  }, [session, navigate, toast]);
   
   const { data: queueItems = [], isLoading } = useQuery({
     queryKey: ['grading-queue', session?.user?.id],
     queryFn: async () => {
-      if (!session?.user?.id) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "You must be logged in to view the grading queue.",
-        });
-        return [];
-      }
-
-      // First check if user is admin
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .single();
-
-      if (profileError || profileData?.role !== 'admin') {
-        console.error('Error fetching profile or user is not admin:', profileError);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "You don't have permission to view the grading queue.",
-        });
+      if (!session?.user?.id || !isAdmin) {
         return [];
       }
 
@@ -108,7 +137,7 @@ export function GradingQueue({ session }: GradingQueueProps) {
 
       return data || [];
     },
-    enabled: !!session?.user?.id,
+    enabled: !!session?.user?.id && isAdmin,
   });
 
   const handleStartGrading = (item: any) => {
@@ -331,6 +360,14 @@ export function GradingQueue({ session }: GradingQueueProps) {
     );
   };
 
+  if (!session?.user?.id) {
+    return null;
+  }
+
+  if (!isAdmin) {
+    return null;
+  }
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
@@ -425,4 +462,3 @@ export function GradingQueue({ session }: GradingQueueProps) {
       </Dialog>
     </Card>
   );
-}
