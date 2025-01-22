@@ -13,18 +13,33 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Parsing request body...');
     const { serviceType, cards, shipping, quantity, totalAmount } = await req.json();
     
+    console.log('Received request data:', {
+      serviceType,
+      cardsCount: cards?.length,
+      shipping: shipping ? 'present' : 'missing',
+      quantity,
+      totalAmount
+    });
+
     if (!serviceType || !cards || !shipping || !quantity || !totalAmount) {
-      console.error('Missing required fields:', { serviceType, cards, shipping, quantity, totalAmount });
       throw new Error('Missing required fields');
+    }
+
+    if (!Array.isArray(cards) || cards.length === 0) {
+      throw new Error('Cards must be a non-empty array');
+    }
+
+    if (!shipping.email) {
+      throw new Error('Shipping email is required');
     }
 
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
       apiVersion: '2023-10-16',
     });
 
-    // Generate a unique order ID with timestamp and random string
     const timestamp = new Date().getTime();
     const randomStr = Math.random().toString(36).substring(2, 8);
     const orderId = `ORD-${timestamp}-${randomStr}`;
@@ -46,7 +61,7 @@ serve(async (req) => {
               name: `Card Grading Service - ${serviceType}`,
               description: `Grading service for ${quantity} card(s)`,
             },
-            unit_amount: Math.round(totalAmount * 100), // Convert to cents
+            unit_amount: Math.round(totalAmount * 100),
           },
           quantity: 1,
         },
@@ -65,13 +80,12 @@ serve(async (req) => {
       }
     });
 
-    console.log('Payment session created:', session.id);
-
     if (!session.url) {
       throw new Error("No checkout URL returned from Stripe");
     }
 
-    // Initialize Supabase client with service role key
+    console.log('Payment session created:', session.id);
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') || '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '',
@@ -85,10 +99,10 @@ serve(async (req) => {
 
     console.log('Creating order record...');
 
-    // Create the order record
     const { error: orderError } = await supabase
       .from('card_submission_orders')
       .insert({
+        id: orderId,
         service_type: serviceType,
         total_amount: totalAmount,
         stripe_session_id: session.id,
@@ -97,12 +111,11 @@ serve(async (req) => {
 
     if (orderError) {
       console.error('Error creating order:', orderError);
-      throw orderError;
+      throw new Error('Failed to create order record');
     }
 
     console.log('Creating card grading records...');
 
-    // Create card grading records for each card
     for (const card of cards) {
       const { error: gradingError } = await supabase
         .from('card_gradings')
@@ -113,8 +126,8 @@ serve(async (req) => {
           set_name: card.cardSet,
           customer_name: `${shipping.firstName} ${shipping.lastName}`,
           customer_email: shipping.email,
-          customer_phone: `${shipping.phonePrefix}${shipping.phoneNumber}`,
-          customer_address: shipping.addressLine1,
+          customer_phone: shipping.phone,
+          customer_address: shipping.address,
           customer_city: shipping.city,
           customer_state: shipping.state,
           customer_zip: shipping.zipCode,
@@ -122,12 +135,12 @@ serve(async (req) => {
           service_type: serviceType,
           shipping_method: shipping.country === 'Romania' ? 'standard' : 'international',
           status: 'pending',
-          ean8: `${Math.random().toString().substring(2, 10)}`, // Generate a random EAN8 for now
+          ean8: `${Math.random().toString().substring(2, 10)}`,
         });
 
       if (gradingError) {
         console.error('Error creating card grading:', gradingError);
-        throw gradingError;
+        throw new Error('Failed to create card grading record');
       }
     }
 
