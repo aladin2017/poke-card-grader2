@@ -13,8 +13,18 @@ interface GradingStats {
   orders_this_month: number;
 }
 
+const defaultStats: GradingStats = {
+  total_orders: 0,
+  pending_orders: 0,
+  completed_orders: 0,
+  rejected_orders: 0,
+  avg_completion_time: null,
+  total_revenue: 0,
+  orders_this_month: 0,
+};
+
 export function StatsCards() {
-  const { data: stats, isLoading, error } = useQuery({
+  const { data: stats = defaultStats, isLoading, error } = useQuery({
     queryKey: ['grading-stats'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -25,13 +35,18 @@ export function StatsCards() {
         throw error;
       }
 
+      // If no data is returned, use default stats
+      if (!data || data.length === 0) {
+        return defaultStats;
+      }
+
       // Convert bigint to number for JavaScript compatibility
       return {
-        ...data[0],
         total_orders: Number(data[0]?.total_orders || 0),
         pending_orders: Number(data[0]?.pending_orders || 0),
         completed_orders: Number(data[0]?.completed_orders || 0),
         rejected_orders: Number(data[0]?.rejected_orders || 0),
+        avg_completion_time: data[0]?.avg_completion_time,
         total_revenue: Number(data[0]?.total_revenue || 0),
         orders_this_month: Number(data[0]?.orders_this_month || 0),
       } as GradingStats;
@@ -65,9 +80,9 @@ export function StatsCards() {
           <Package className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{stats?.total_orders || '0'}</div>
+          <div className="text-2xl font-bold">{stats.total_orders}</div>
           <p className="text-xs text-muted-foreground">
-            {stats?.orders_this_month || '0'} this month
+            {stats.orders_this_month} this month
           </p>
         </CardContent>
       </Card>
@@ -80,7 +95,7 @@ export function StatsCards() {
           <Clock className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{stats?.pending_orders || '0'}</div>
+          <div className="text-2xl font-bold">{stats.pending_orders}</div>
           <p className="text-xs text-muted-foreground">
             Requires attention
           </p>
@@ -95,9 +110,9 @@ export function StatsCards() {
           <Users className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{stats?.completed_orders || '0'}</div>
+          <div className="text-2xl font-bold">{stats.completed_orders}</div>
           <p className="text-xs text-muted-foreground">
-            Avg. time: {formatCompletionTime(stats?.avg_completion_time)}
+            Avg. time: {formatCompletionTime(stats.avg_completion_time)}
           </p>
         </CardContent>
       </Card>
@@ -110,7 +125,7 @@ export function StatsCards() {
           <DollarSign className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">€{stats?.total_revenue || 0}</div>
+          <div className="text-2xl font-bold">€{stats.total_revenue}</div>
           <p className="text-xs text-muted-foreground">
             Total earnings
           </p>
