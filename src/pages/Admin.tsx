@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OrderList } from "@/components/admin/OrderList";
 import { OrderStats } from "@/components/admin/OrderStats";
+import { GradingProcess } from "@/components/grading/GradingProcess";
 import { GradingOrder } from "@/types/orders";
 
 const Admin = () => {
@@ -25,9 +26,10 @@ const Admin = () => {
       <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
       
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 lg:w-[400px]">
+        <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="orders">Orders</TabsTrigger>
+          <TabsTrigger value="grading">Grading</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -37,9 +39,13 @@ const Admin = () => {
         <TabsContent value="orders">
           <OrderList />
         </TabsContent>
+
+        <TabsContent value="grading">
+          <GradingProcess />
+        </TabsContent>
       </Tabs>
     </div>
   );
-};
+}
 
 export default Admin;
