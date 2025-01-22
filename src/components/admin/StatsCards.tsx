@@ -14,7 +14,7 @@ interface GradingStats {
 }
 
 export function StatsCards() {
-  const { data: stats, isLoading } = useQuery({
+  const { data: stats, isLoading, error } = useQuery({
     queryKey: ['grading-stats'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -25,12 +25,26 @@ export function StatsCards() {
         throw error;
       }
 
-      return data[0] as GradingStats;
+      // Convert bigint to number for JavaScript compatibility
+      return {
+        ...data[0],
+        total_orders: Number(data[0]?.total_orders || 0),
+        pending_orders: Number(data[0]?.pending_orders || 0),
+        completed_orders: Number(data[0]?.completed_orders || 0),
+        rejected_orders: Number(data[0]?.rejected_orders || 0),
+        total_revenue: Number(data[0]?.total_revenue || 0),
+        orders_this_month: Number(data[0]?.orders_this_month || 0),
+      } as GradingStats;
     },
   });
 
   if (isLoading) {
     return <div>Loading stats...</div>;
+  }
+
+  if (error) {
+    console.error('Error:', error);
+    return <div>Error loading stats</div>;
   }
 
   const formatCompletionTime = (timeStr: string | null) => {
