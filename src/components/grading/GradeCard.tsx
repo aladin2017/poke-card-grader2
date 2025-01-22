@@ -17,7 +17,7 @@ export function GradeCard({ card, onGradeSubmit }: Props) {
   const [centering, setCentering] = useState(0);
   const [corners, setCorners] = useState(0);
   const [edges, setEdges] = useState(0);
-  const [surface, setSurface] = useState(0);
+  const [surfaces, setSurfaces] = useState(0);
   const [notes, setNotes] = useState("");
   const [frontImage, setFrontImage] = useState("");
   const [backImage, setBackImage] = useState("");
@@ -38,14 +38,14 @@ export function GradeCard({ card, onGradeSubmit }: Props) {
   };
 
   const calculateFinalGrade = () => {
-    const total = centering + corners + edges + surface;
+    const total = centering + corners + edges + surfaces;
     return parseFloat((total / 4).toFixed(1));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (centering === 0 || corners === 0 || edges === 0 || surface === 0) {
+    if (centering === 0 || corners === 0 || edges === 0 || surfaces === 0) {
       toast({
         title: "Error",
         description: "All grading criteria must be filled out",
@@ -58,7 +58,7 @@ export function GradeCard({ card, onGradeSubmit }: Props) {
       centering,
       corners,
       edges,
-      surface,
+      surfaces,
       finalGrade: calculateFinalGrade(),
       notes,
       frontImage,
@@ -110,14 +110,14 @@ export function GradeCard({ card, onGradeSubmit }: Props) {
               />
             </div>
             <div className="space-y-2">
-              <Label>Surface (1-10)</Label>
+              <Label>Surfaces (1-10)</Label>
               <Input
                 type="number"
                 min="1"
                 max="10"
                 step="0.5"
-                value={surface}
-                onChange={(e) => setSurface(parseFloat(e.target.value))}
+                value={surfaces}
+                onChange={(e) => setSurfaces(parseFloat(e.target.value))}
               />
             </div>
           </div>
