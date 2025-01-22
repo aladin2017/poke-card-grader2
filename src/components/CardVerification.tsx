@@ -52,10 +52,20 @@ export const CardVerification = () => {
         return null;
       }
 
-      // Convert the grading_details from JSON to GradingDetails type
+      // Safely convert the grading_details from JSON to GradingDetails type
+      const gradingDetails = data.grading_details as unknown as GradingDetails;
+      
+      // Validate that the grading details have all required properties
+      const isValidGradingDetails = gradingDetails && 
+        typeof gradingDetails.centering === 'number' &&
+        typeof gradingDetails.surfaces === 'number' &&
+        typeof gradingDetails.edges === 'number' &&
+        typeof gradingDetails.corners === 'number' &&
+        typeof gradingDetails.finalGrade === 'number';
+
       return {
         ...data,
-        grading_details: data.grading_details as GradingDetails | null
+        grading_details: isValidGradingDetails ? gradingDetails : null
       };
     },
     enabled: ean8.length === 8,
