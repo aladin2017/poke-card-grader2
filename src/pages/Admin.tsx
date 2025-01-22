@@ -14,6 +14,7 @@ const Admin = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [session, setSession] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -22,12 +23,19 @@ const Admin = () => {
         const { data: { session: currentSession } } = await supabase.auth.getSession();
         
         if (!currentSession?.user?.id) {
+          toast({
+            variant: "destructive",
+            title: "Authentication Required",
+            description: "Please sign in to access the admin dashboard.",
+          });
           navigate('/auth');
           return;
         }
 
+        // Set session first
         setSession(currentSession);
 
+        // Then check admin status
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('role')
@@ -59,7 +67,14 @@ const Admin = () => {
         setIsAdmin(true);
       } catch (error) {
         console.error('Error in checkAuth:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "An error occurred while checking authentication.",
+        });
         navigate('/auth');
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -83,8 +98,16 @@ const Admin = () => {
           .single();
 
         if (profileData?.role !== 'admin') {
+          toast({
+            variant: "destructive",
+            title: "Access Denied",
+            description: "You must be an admin to access this page.",
+          });
           navigate('/');
+          return;
         }
+
+        setIsAdmin(true);
       } catch (error) {
         console.error('Error checking admin status:', error);
         navigate('/');
@@ -93,6 +116,10 @@ const Admin = () => {
 
     return () => subscription.unsubscribe();
   }, [navigate, toast]);
+
+  if (isLoading) {
+    return <div className="container py-8">Loading...</div>;
+  }
 
   if (!session || !isAdmin) {
     return null;
