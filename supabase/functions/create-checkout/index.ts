@@ -62,7 +62,7 @@ serve(async (req) => {
               name: `Card Grading Service - ${serviceType}`,
               description: `Grading service for ${quantity} card(s)`,
             },
-            unit_amount: Math.round(totalAmount * 100),
+            unit_amount: Math.round(totalAmount * 100), // Convert to cents
           },
           quantity: 1,
         },
@@ -117,7 +117,7 @@ serve(async (req) => {
     const { data: orderData, error: orderError } = await supabase
       .from('card_submission_orders')
       .insert({
-        user_id: userId, // This can be null for anonymous users
+        user_id: userId,
         service_type: serviceType,
         total_amount: totalAmount,
         stripe_session_id: session.id,
@@ -141,7 +141,7 @@ serve(async (req) => {
           card_name: card.cardName,
           card_number: card.cardNumber,
           set_name: card.cardSet,
-          user_id: userId, // This can be null for anonymous users
+          user_id: userId,
           customer_name: `${shipping.firstName} ${shipping.lastName}`,
           customer_email: shipping.email,
           customer_phone: `${shipping.phonePrefix}${shipping.phoneNumber}`,
