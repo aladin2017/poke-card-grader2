@@ -8,14 +8,7 @@ import { Search } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-
-interface GradingDetails {
-  centering: number;
-  surfaces: number;
-  edges: number;
-  corners: number;
-  finalGrade: number;
-}
+import { GradingDetails } from "@/types/grading";
 
 interface CardData {
   id: string;
@@ -59,7 +52,11 @@ export const CardVerification = () => {
         return null;
       }
 
-      return data;
+      // Convert the grading_details from JSON to GradingDetails type
+      return {
+        ...data,
+        grading_details: data.grading_details as GradingDetails | null
+      };
     },
     enabled: ean8.length === 8,
   });

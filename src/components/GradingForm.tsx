@@ -51,10 +51,10 @@ const formSchema = z.object({
   country: z.string().min(2, {
     message: "Țara trebuie să conțină cel puțin 2 caractere.",
   }),
-  serviceType: z.enum(["standard", "medium", "priority"], {
+  serviceType: z.enum(["standard", "express", "premium"], {
     required_error: "Vă rugăm să selectați un tip de serviciu.",
   }),
-  shippingMethod: z.enum(["standard", "express"], {
+  shippingMethod: z.enum(["standard", "express", "international"], {
     required_error: "Vă rugăm să selectați o metodă de livrare.",
   }),
   cards: z.array(
@@ -266,8 +266,8 @@ export function GradingForm() {
   const calculateTotal = (data: z.infer<typeof formSchema>) => {
     const servicePrice = {
       standard: 15,
-      medium: 20,
-      priority: 25,
+      express: 25,
+      premium: 35,
     }[data.serviceType];
 
     const shippingPrice = {
@@ -422,8 +422,8 @@ export function GradingForm() {
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="standard">Standard ($15/card)</SelectItem>
-                        <SelectItem value="medium">Medium ($20/card)</SelectItem>
-                        <SelectItem value="priority">Priority ($25/card)</SelectItem>
+                        <SelectItem value="express">Express ($25/card)</SelectItem>
+                        <SelectItem value="premium">Premium ($35/card)</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -588,7 +588,7 @@ export function GradingForm() {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span>Service ({fields.length} cards)</span>
-                    <span>${fields.length * (form.getValues("serviceType") === "standard" ? 15 : form.getValues("serviceType") === "medium" ? 20 : 25)}</span>
+                    <span>${fields.length * (form.getValues("serviceType") === "standard" ? 15 : form.getValues("serviceType") === "express" ? 25 : 35)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Shipping ({form.getValues("shippingMethod")})</span>

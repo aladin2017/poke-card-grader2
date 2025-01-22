@@ -17,3 +17,15 @@ export interface QueueItem {
     backImage?: string;
   };
 }
+
+export interface GradingDetails {
+  centering: number;
+  surfaces: number;
+  edges: number;
+  corners: number;
+  finalGrade: number;
+}
+
+export type ServiceType = "standard" | "express" | "premium";
+export type ShippingMethod = "standard" | "express" | "international";
+export type OrderStatus = "pending" | "queued" | "in_progress" | "completed" | "rejected";
