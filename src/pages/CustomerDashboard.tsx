@@ -28,7 +28,6 @@ interface Order {
   status: string;
   created_at: string;
   grading_details: GradingDetails | null;
-  total_amount: number;
 }
 
 const CustomerDashboard = () => {
@@ -50,7 +49,7 @@ const CustomerDashboard = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return (orderData || []) as Order[];
+      return orderData as Order[];
     },
   });
 
