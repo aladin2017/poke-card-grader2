@@ -12,8 +12,31 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 
+interface GradingDetails {
+  centering: number;
+  surfaces: number;
+  edges: number;
+  corners: number;
+  finalGrade: number;
+}
+
+interface CardGrading {
+  card_name: string;
+  order_id: string;
+  customer_name: string;
+  grading_details: GradingDetails | null;
+}
+
+interface HistoryItem {
+  id: string;
+  changed_at: string;
+  status: string;
+  notes: string | null;
+  card_gradings: CardGrading | null;
+}
+
 export function GradingHistory() {
-  const { data: historyItems = [], isLoading } = useQuery({
+  const { data: historyItems = [], isLoading } = useQuery<HistoryItem[]>({
     queryKey: ['grading-history'],
     queryFn: async () => {
       const { data, error } = await supabase
