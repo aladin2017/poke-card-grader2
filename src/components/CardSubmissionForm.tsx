@@ -71,19 +71,35 @@ export function CardSubmissionForm() {
   });
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
-    if (step === 1) {
-      setStep(2);
-      return;
-    }
-
     try {
-      // Here you would typically submit the form data to your backend
+      if (step === 1) {
+        // Validate only the cards array when on step 1
+        const cardsValidation = z.object({
+          cards: formSchema.shape.cards,
+        });
+        
+        const result = cardsValidation.safeParse({ cards: data.cards });
+        if (result.success) {
+          setStep(2);
+        } else {
+          console.error("Validation failed:", result.error);
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Please fill in all required card fields",
+          });
+        }
+        return;
+      }
+
+      // If we're on step 2, we'll submit the entire form
       console.log("Form submitted:", data);
       toast({
         title: "Success",
         description: "Your submission has been received",
       });
     } catch (error) {
+      console.error("Form error:", error);
       toast({
         variant: "destructive",
         title: "Error",
