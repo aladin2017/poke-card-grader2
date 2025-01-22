@@ -88,11 +88,9 @@ const formSchema = z.object({
 
 const getPricePerCard = (serviceType: string) => {
   const prices = {
-    bulk: 12,
-    standard: 15,
-    medium: 20,
-    priority: 25,
-    express: 30,
+    standard: 12,
+    express: 25,
+    premium: 35
   };
   return prices[serviceType.toLowerCase()] || 15;
 };
