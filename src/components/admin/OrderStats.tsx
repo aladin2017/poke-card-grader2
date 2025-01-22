@@ -20,11 +20,15 @@ export function OrderStats({ orders }: OrderStatsProps) {
 
     const totalTime = completedOrders.reduce((sum, order) => {
       const start = new Date(order.createdAt).getTime();
-      const end = new Date().getTime();
+      const end = new Date(order.updatedAt).getTime();
       return sum + (end - start);
     }, 0);
 
     return Math.round(totalTime / completedOrders.length / (1000 * 60 * 60 * 24));
+  };
+
+  const getPriorityOrdersCount = () => {
+    return orders.filter(order => order.priority).length;
   };
 
   return (
@@ -62,6 +66,33 @@ export function OrderStats({ orders }: OrderStatsProps) {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{getAverageProcessingTime()}</div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Comenzi Prioritare</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{getPriorityOrdersCount()}</div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Comenzi Finalizate</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{getOrdersByStatus("completed")}</div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Comenzi Respinse</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{getOrdersByStatus("rejected")}</div>
         </CardContent>
       </Card>
     </div>

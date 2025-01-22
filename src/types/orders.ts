@@ -1,5 +1,28 @@
 export type OrderStatus = 'pending' | 'queued' | 'in_progress' | 'completed' | 'rejected';
 
+export interface GradingDetails {
+  centering: number;
+  surfaces: number;
+  edges: number;
+  corners: number;
+  finalGrade: number;
+  frontImage?: string;
+  backImage?: string;
+}
+
+export interface GradingCard {
+  id: string;
+  name: string;
+  year: string;
+  set: string;
+  cardNumber?: string;
+  variant?: string;
+  notes?: string;
+  ean8: string;
+  status: OrderStatus;
+  gradingDetails?: GradingDetails;
+}
+
 export interface GradingOrder {
   id: string;
   customerName: string;
@@ -14,27 +37,9 @@ export interface GradingOrder {
   shippingMethod: 'standard' | 'express';
   status: OrderStatus;
   createdAt: string;
+  updatedAt: string;
   totalAmount: number;
   cards: GradingCard[];
-}
-
-export interface GradingCard {
-  id: string;
-  name: string;
-  year: string;
-  set: string;
-  cardNumber?: string;
-  variant?: string;
-  notes?: string;
-  ean8?: string;
-  status: OrderStatus;
-  gradingDetails?: {
-    centering: number;
-    surfaces: number;
-    edges: number;
-    corners: number;
-    finalGrade: number;
-    frontImage?: string;
-    backImage?: string;
-  };
+  internalNotes?: string;
+  priority: boolean;
 }
