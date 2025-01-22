@@ -36,7 +36,7 @@ const CustomerDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Check authentication status
+  // Check authentication status on mount
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session }, error } = await supabase.auth.getSession();
