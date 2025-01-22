@@ -51,6 +51,31 @@ serve(async (req) => {
       orderDisplayId
     });
 
+    // Get user ID if authenticated
+    let userId = null;
+    const authHeader = req.headers.get('Authorization');
+    console.log('Auth header present:', !!authHeader);
+    
+    if (authHeader) {
+      try {
+        const supabase = createClient(
+          Deno.env.get('SUPABASE_URL') || '',
+          Deno.env.get('SUPABASE_ANON_KEY') || '',
+        );
+        const { data: { user }, error } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
+        if (error) {
+          console.error('Error getting user:', error);
+        }
+        if (user) {
+          userId = user.id;
+          console.log('User ID retrieved:', userId);
+        }
+      } catch (error) {
+        console.error('Error processing auth header:', error);
+        // Continue without user ID if there's an error
+      }
+    }
+
     // Create the session with the correct mode
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -78,6 +103,7 @@ serve(async (req) => {
         order_display_id: orderDisplayId,
         service_type: serviceType,
         quantity: quantity.toString(),
+        user_id: userId || 'anonymous'
       }
     });
 
@@ -86,20 +112,6 @@ serve(async (req) => {
     }
 
     console.log('Payment session created:', session.id);
-
-    // Get user ID if authenticated
-    let userId = null;
-    const authHeader = req.headers.get('Authorization');
-    if (authHeader) {
-      const supabase = createClient(
-        Deno.env.get('SUPABASE_URL') || '',
-        Deno.env.get('SUPABASE_ANON_KEY') || '',
-      );
-      const { data: { user } } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
-      if (user) {
-        userId = user.id;
-      }
-    }
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') || '',
