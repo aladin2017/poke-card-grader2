@@ -85,10 +85,17 @@ export function GradingQueue({ session }: GradingQueueProps) {
           .single();
 
         if (profileError) {
-          throw profileError;
+          console.error('Profile fetch error:', profileError);
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Could not verify admin status.",
+          });
+          navigate('/');
+          return;
         }
 
-        if (profileData?.role !== 'admin') {
+        if (!profileData || profileData.role !== 'admin') {
           toast({
             variant: "destructive",
             title: "Access Denied",
@@ -120,24 +127,36 @@ export function GradingQueue({ session }: GradingQueueProps) {
         return [];
       }
 
-      const { data, error } = await supabase
-        .from('card_gradings')
-        .select('*')
-        .eq('status', 'queued')
-        .order('created_at', { ascending: true });
+      try {
+        const { data, error } = await supabase
+          .from('card_gradings')
+          .select('*')
+          .eq('status', 'queued')
+          .order('created_at', { ascending: true });
 
-      if (error) {
+        if (error) {
+          console.error('Queue fetch error:', error);
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to fetch queue items. Please try again.",
+          });
+          return [];
+        }
+
+        return data || [];
+      } catch (error) {
+        console.error('Queue fetch error:', error);
         toast({
           variant: "destructive",
           title: "Error",
           description: "Failed to fetch queue items. Please try again.",
         });
-        throw error;
+        return [];
       }
-
-      return data || [];
     },
     enabled: !!session?.user?.id && isAdmin,
+    retry: false,
   });
 
   const handleStartGrading = (item: any) => {
@@ -360,11 +379,7 @@ export function GradingQueue({ session }: GradingQueueProps) {
     );
   };
 
-  if (!session?.user?.id) {
-    return null;
-  }
-
-  if (!isAdmin) {
+  if (!session?.user?.id || !isAdmin) {
     return null;
   }
 
