@@ -134,7 +134,15 @@ export function GradingQueue() {
       const { error } = await supabase
         .from('card_gradings')
         .update({
-          grading_details: gradingDetails,
+          grading_details: {
+            centering: gradingDetails.centering,
+            surfaces: gradingDetails.surfaces,
+            edges: gradingDetails.edges,
+            corners: gradingDetails.corners,
+            finalGrade: gradingDetails.finalGrade
+          },
+          front_image_url: gradingDetails.frontImage,
+          back_image_url: gradingDetails.backImage,
           status: 'completed'
         })
         .eq('order_id', orderId);
@@ -185,6 +193,17 @@ export function GradingQueue() {
           } else {
             setBackImage(publicUrl);
           }
+
+          // Update the card_gradings table with the image URL
+          const { error: updateError } = await supabase
+            .from('card_gradings')
+            .update({
+              [`${side}_image_url`]: publicUrl
+            })
+            .eq('order_id', item.order_id);
+
+          if (updateError) throw updateError;
+
         } catch (error) {
           console.error('Error uploading image:', error);
           toast({
