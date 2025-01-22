@@ -72,6 +72,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
     );
 
+    // Create the order record
     const { error: orderError } = await supabase
       .from('card_submission_orders')
       .insert({
@@ -83,6 +84,35 @@ serve(async (req) => {
     if (orderError) {
       console.error('Error creating order:', orderError);
       throw orderError;
+    }
+
+    // Create card grading records for each card
+    for (const card of cards) {
+      const { error: gradingError } = await supabase
+        .from('card_gradings')
+        .insert({
+          order_id: orderId,
+          card_name: card.cardName,
+          card_number: card.cardNumber,
+          set_name: card.cardSet,
+          customer_name: `${shipping.firstName} ${shipping.lastName}`,
+          customer_email: shipping.email,
+          customer_phone: `${shipping.phonePrefix}${shipping.phoneNumber}`,
+          customer_address: shipping.addressLine1,
+          customer_city: shipping.city,
+          customer_state: shipping.state,
+          customer_zip: shipping.zipCode,
+          customer_country: shipping.country,
+          service_type: serviceType,
+          shipping_method: shipping.country === 'Romania' ? 'standard' : 'international',
+          status: 'pending',
+          ean8: `${Math.random().toString().substring(2, 10)}`, // Generate a random EAN8 for now
+        });
+
+      if (gradingError) {
+        console.error('Error creating card grading:', gradingError);
+        throw gradingError;
+      }
     }
 
     return new Response(

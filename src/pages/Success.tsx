@@ -29,18 +29,29 @@ const Success = () => {
           <div className="flex justify-center mb-4">
             <CheckCircle className="h-16 w-16 text-green-500" />
           </div>
-          <CardTitle className="text-2xl">Payment Successful!</CardTitle>
-          <CardDescription>
-            Thank you for your order. Your order number is: {orderId}
+          <CardTitle className="text-2xl">Thank You for Your Order!</CardTitle>
+          <CardDescription className="text-lg mt-2">
+            Your order has been successfully placed and confirmed.
+            <br />
+            Order Number: <span className="font-semibold">{orderId}</span>
           </CardDescription>
         </CardHeader>
-        <CardContent className="text-center space-y-4">
-          <p className="text-gray-600">
-            We will start processing your card grading request shortly. You can track the status of your order in your account.
-          </p>
-          <div className="flex justify-center gap-4">
+        <CardContent className="text-center space-y-6">
+          <div className="space-y-4 text-gray-600">
+            <p>
+              We have received your card grading submission and our team will start processing it shortly.
+              You can track the status of your cards through your account dashboard.
+            </p>
+            <p>
+              A confirmation email has been sent to your email address with all the order details.
+            </p>
+            <p className="font-medium">
+              Thank you for choosing our card grading service!
+            </p>
+          </div>
+          <div className="flex justify-center gap-4 pt-4">
             <Button onClick={() => navigate("/")}>
-              Return Home
+              Return to Home
             </Button>
           </div>
         </CardContent>
