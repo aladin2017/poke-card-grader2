@@ -13,17 +13,8 @@ serve(async (req) => {
   }
 
   try {
-    const { serviceType, cards, shipping } = await req.json();
+    const { serviceType, cards, shipping, quantity, totalAmount } = await req.json();
     
-    // Calculate total amount based on service type and number of cards
-    const pricePerCard = {
-      standard: 15,
-      express: 25,
-      premium: 35
-    }[serviceType.toLowerCase()] || 15;
-    
-    const totalAmount = pricePerCard * cards.length;
-
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
       apiVersion: '2023-10-16',
     });
@@ -37,11 +28,11 @@ serve(async (req) => {
             currency: 'eur',
             product_data: {
               name: `Card Grading Service - ${serviceType}`,
-              description: `Grading service for ${cards.length} card(s)`,
+              description: `Grading service for ${quantity} card(s)`,
             },
-            unit_amount: pricePerCard * 100, // Convert to cents
+            unit_amount: Math.round(totalAmount * 100), // Convert to cents
           },
-          quantity: cards.length,
+          quantity: 1,
         },
       ],
       mode: 'payment',
