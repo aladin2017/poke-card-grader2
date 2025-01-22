@@ -65,7 +65,7 @@ export function GradingHistory() {
         ...item,
         card_gradings: item.card_gradings ? {
           ...item.card_gradings,
-          grading_details: item.card_gradings.grading_details as GradingDetails | null
+          grading_details: item.card_gradings.grading_details as unknown as GradingDetails | null
         } : null
       })) as HistoryItem[];
     },
