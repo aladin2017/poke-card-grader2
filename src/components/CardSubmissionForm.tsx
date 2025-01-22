@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -91,6 +91,7 @@ export function CardSubmissionForm() {
   const { toast } = useToast();
   const { serviceType } = useParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [shippingCost, setShippingCost] = useState(12);
   const pricePerCard = getPricePerCard(serviceType || '');
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -117,6 +118,15 @@ export function CardSubmissionForm() {
     name: "cards",
   });
 
+  // Watch for country changes
+  const selectedCountry = form.watch("shipping.country");
+  
+  useEffect(() => {
+    if (selectedCountry) {
+      setShippingCost(getShippingCost(selectedCountry));
+    }
+  }, [selectedCountry]);
+
   const addCard = () => {
     append({ cardName: "", cardNumber: "", cardSet: "" });
   };
@@ -128,7 +138,6 @@ export function CardSubmissionForm() {
   };
 
   const calculateTotal = () => {
-    const shippingCost = getShippingCost(form.getValues("shipping.country"));
     return (fields.length * pricePerCard) + shippingCost;
   };
 
@@ -308,8 +317,13 @@ export function CardSubmissionForm() {
                             </FormControl>
                             <SelectContent>
                               {europeanCountries.map((country) => (
-                                <SelectItem key={country.code} value={country.prefix}>
-                                  {country.prefix}
+                                <SelectItem 
+                                  key={country.code} 
+                                  value={country.prefix}
+                                  className="flex items-center gap-2"
+                                >
+                                  <span className="font-mono">{country.prefix}</span>
+                                  <span className="text-muted-foreground">({country.name})</span>
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -427,7 +441,7 @@ export function CardSubmissionForm() {
                 </div>
                 <div className="flex justify-between">
                   <span>Shipping cost:</span>
-                  <span>{getShippingCost(form.getValues("shipping.country") || "")} €</span>
+                  <span>{shippingCost} €</span>
                 </div>
                 <div className="flex justify-between font-bold text-lg pt-2 border-t">
                   <span>Total:</span>
