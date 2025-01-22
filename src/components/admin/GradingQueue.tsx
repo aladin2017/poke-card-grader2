@@ -127,33 +127,22 @@ export function GradingQueue({ session }: GradingQueueProps) {
         return [];
       }
 
-      try {
-        const { data, error } = await supabase
-          .from('card_gradings')
-          .select('*')
-          .eq('status', 'queued')
-          .order('created_at', { ascending: true });
+      const { data, error } = await supabase
+        .from('card_gradings')
+        .select('*')
+        .in('status', ['pending', 'queued'])
+        .order('created_at', { ascending: true });
 
-        if (error) {
-          console.error('Queue fetch error:', error);
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Failed to fetch queue items. Please try again.",
-          });
-          return [];
-        }
-
-        return data || [];
-      } catch (error) {
-        console.error('Queue fetch error:', error);
+      if (error) {
         toast({
           variant: "destructive",
           title: "Error",
           description: "Failed to fetch queue items. Please try again.",
         });
-        return [];
+        throw error;
       }
+
+      return data || [];
     },
     enabled: !!session?.user?.id && isAdmin,
     retry: false,
