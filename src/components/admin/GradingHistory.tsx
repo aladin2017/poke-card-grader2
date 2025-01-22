@@ -69,12 +69,12 @@ export function GradingHistory({ session }: GradingHistoryProps) {
         .eq('id', session.user.id)
         .single();
 
-      if (profileError || profileData?.role !== 'admin') {
-        console.error('Error fetching profile or user is not admin:', profileError);
+      if (profileError) {
+        console.error('Error fetching profile:', profileError);
         toast({
           variant: "destructive",
           title: "Error",
-          description: "You don't have permission to view grading history.",
+          description: "Failed to fetch user profile. Please try again.",
         });
         return [];
       }
@@ -99,6 +99,11 @@ export function GradingHistory({ session }: GradingHistoryProps) {
           description: "Failed to fetch grading history. Please try again.",
         });
         throw gradingsError;
+      }
+
+      // If user is not admin, filter to show only their cards
+      if (profileData?.role !== 'admin') {
+        return gradings?.filter(grading => grading.user_id === session.user.id) || [];
       }
 
       return gradings || [];
