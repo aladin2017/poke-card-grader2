@@ -62,15 +62,23 @@ export const Header = () => {
 
   const handleSignOut = async () => {
     try {
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      setSession(null);
+      setUserRole(null);
+      
       toast({
         title: "Signed out successfully",
         duration: 2000,
       });
-      navigate('/');
-    } catch (error) {
+      
+      navigate('/auth');
+    } catch (error: any) {
+      console.error('Error signing out:', error.message);
       toast({
         title: "Error signing out",
+        description: error.message,
         variant: "destructive",
         duration: 2000,
       });
