@@ -9,7 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, CheckCircle, ClipboardEdit } from "lucide-react";
+import { ArrowRight, CheckCircle, ClipboardEdit, Image } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import {
@@ -56,6 +56,8 @@ const getGradeColor = (grade: number) => {
 export function GradingQueue() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [isGradingDialogOpen, setIsGradingDialogOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<any>(null);
   
   const { data: queueItems = [], isLoading } = useQuery({
     queryKey: ['grading-queue'],
@@ -79,114 +81,9 @@ export function GradingQueue() {
     },
   });
 
-  const handleStartGrading = async (orderId: string) => {
-    try {
-      const { error } = await supabase
-        .from('card_gradings')
-        .update({ status: 'in_progress' })
-        .eq('order_id', orderId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Grading Started",
-        description: `Started grading process for order ${orderId}`,
-      });
-
-      queryClient.invalidateQueries({ queryKey: ['grading-queue'] });
-    } catch (error) {
-      console.error('Error updating order:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to start grading. Please try again.",
-      });
-    }
-  };
-
-  const handleMarkComplete = async (orderId: string) => {
-    try {
-      const { error } = await supabase
-        .from('card_gradings')
-        .update({ 
-          status: 'completed',
-          graded_at: new Date().toISOString()
-        })
-        .eq('order_id', orderId);
-
-      if (error) throw error;
-
-      const { error: historyError } = await supabase
-        .from('card_grading_history')
-        .insert({
-          card_grading_id: orderId,
-          status: 'completed',
-          notes: 'Grading completed'
-        });
-
-      if (historyError) throw historyError;
-
-      toast({
-        title: "Grading Completed",
-        description: `Order ${orderId} has been successfully graded`,
-      });
-
-      queryClient.invalidateQueries({ queryKey: ['grading-queue'] });
-    } catch (error) {
-      console.error('Error updating order:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to complete grading. Please try again.",
-      });
-    }
-  };
-
-  const handleGradingSubmit = async (orderId: string, gradingDetails: any) => {
-    try {
-      const { error } = await supabase
-        .from('card_gradings')
-        .update({
-          grading_details: {
-            centering: gradingDetails.centering,
-            surfaces: gradingDetails.surfaces,
-            edges: gradingDetails.edges,
-            corners: gradingDetails.corners,
-            finalGrade: gradingDetails.finalGrade
-          },
-          front_image_url: gradingDetails.frontImage,
-          back_image_url: gradingDetails.backImage,
-          status: 'completed',
-          graded_at: new Date().toISOString()
-        })
-        .eq('order_id', orderId);
-
-      if (error) throw error;
-
-      const { error: historyError } = await supabase
-        .from('card_grading_history')
-        .insert({
-          card_grading_id: orderId,
-          status: 'completed',
-          notes: `Final grade: ${gradingDetails.finalGrade}`
-        });
-
-      if (historyError) throw historyError;
-
-      toast({
-        title: "Grading Details Saved",
-        description: `Grading details for order ${orderId} have been saved successfully`,
-      });
-
-      queryClient.invalidateQueries({ queryKey: ['grading-queue'] });
-    } catch (error) {
-      console.error('Error updating order:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to save grading details. Please try again.",
-      });
-    }
+  const handleStartGrading = (item: any) => {
+    setSelectedItem(item);
+    setIsGradingDialogOpen(true);
   };
 
   const GradingForm = ({ item }: { item: any }) => {
@@ -217,16 +114,6 @@ export function GradingQueue() {
           } else {
             setBackImage(publicUrl);
           }
-
-          const { error: updateError } = await supabase
-            .from('card_gradings')
-            .update({
-              [`${side}_image_url`]: publicUrl
-            })
-            .eq('order_id', item.order_id);
-
-          if (updateError) throw updateError;
-
         } catch (error) {
           console.error('Error uploading image:', error);
           toast({
@@ -238,30 +125,47 @@ export function GradingQueue() {
       }
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!finalGrade) {
+    const handleFinalizeGrading = async () => {
+      try {
+        const { error } = await supabase
+          .from('card_gradings')
+          .update({
+            grading_details: {
+              centering,
+              surfaces,
+              edges,
+              corners,
+              finalGrade: parseFloat(finalGrade)
+            },
+            front_image_url: frontImage,
+            back_image_url: backImage,
+            status: 'completed',
+            graded_at: new Date().toISOString(),
+            graded_by: (await supabase.auth.getUser()).data.user?.id
+          })
+          .eq('order_id', item.order_id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Grading Completed",
+          description: `Card ${item.card_name} has been successfully graded.`,
+        });
+
+        setIsGradingDialogOpen(false);
+        queryClient.invalidateQueries({ queryKey: ['grading-queue'] });
+      } catch (error) {
+        console.error('Error finalizing grading:', error);
         toast({
           variant: "destructive",
           title: "Error",
-          description: "Please select a final grade.",
+          description: "Failed to finalize grading. Please try again.",
         });
-        return;
       }
-
-      handleGradingSubmit(item.order_id, {
-        centering,
-        surfaces,
-        edges,
-        corners,
-        finalGrade: parseFloat(finalGrade),
-        frontImage,
-        backImage,
-      });
     };
 
     return (
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={(e) => { e.preventDefault(); handleFinalizeGrading(); }} className="space-y-6">
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="centering">Centering (0-10)</Label>
@@ -336,13 +240,16 @@ export function GradingQueue() {
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="frontImage">Front Image</Label>
-            <Input
-              id="frontImage"
-              type="file"
-              accept="image/*"
-              onChange={(e) => handleImageUpload(e, 'front')}
-              required
-            />
+            <div className="flex items-center gap-2">
+              <Input
+                id="frontImage"
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleImageUpload(e, 'front')}
+                required
+              />
+              {frontImage && <Image className="w-6 h-6 text-green-500" />}
+            </div>
             {frontImage && (
               <div className="mt-2">
                 <img 
@@ -355,13 +262,16 @@ export function GradingQueue() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="backImage">Back Image</Label>
-            <Input
-              id="backImage"
-              type="file"
-              accept="image/*"
-              onChange={(e) => handleImageUpload(e, 'back')}
-              required
-            />
+            <div className="flex items-center gap-2">
+              <Input
+                id="backImage"
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleImageUpload(e, 'back')}
+                required
+              />
+              {backImage && <Image className="w-6 h-6 text-green-500" />}
+            </div>
             {backImage && (
               <div className="mt-2">
                 <img 
@@ -375,7 +285,10 @@ export function GradingQueue() {
         </div>
         
         <div className="pt-4 border-t">
-          <Button type="submit" className="w-full">Save Grading Details</Button>
+          <Button type="submit" className="w-full">
+            Finalizează Gradarea
+            <CheckCircle className="ml-2 h-4 w-4" />
+          </Button>
         </div>
       </form>
     );
@@ -449,42 +362,11 @@ export function GradingQueue() {
                           <Button 
                             size="sm" 
                             variant="outline"
-                            onClick={() => handleStartGrading(item.order_id)}
+                            onClick={() => handleStartGrading(item)}
                           >
                             Start Grading
                             <ArrowRight className="ml-2 h-4 w-4" />
                           </Button>
-                        )}
-                        {item.status === "in_progress" && (
-                          <>
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button 
-                                  size="sm" 
-                                  variant="outline"
-                                >
-                                  Grade Card
-                                  <ClipboardEdit className="ml-2 h-4 w-4" />
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent>
-                                <DialogHeader>
-                                  <DialogTitle>Grade Card: {item.card_name}</DialogTitle>
-                                </DialogHeader>
-                                <GradingForm item={item} />
-                              </DialogContent>
-                            </Dialog>
-                            
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
-                              className="text-green-600"
-                              onClick={() => handleMarkComplete(item.order_id)}
-                            >
-                              Mark Complete
-                              <CheckCircle className="ml-2 h-4 w-4" />
-                            </Button>
-                          </>
                         )}
                       </div>
                     </TableCell>
@@ -495,6 +377,15 @@ export function GradingQueue() {
           </div>
         ))}
       </CardContent>
+
+      <Dialog open={isGradingDialogOpen} onOpenChange={setIsGradingDialogOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Grade Card: {selectedItem?.card_name}</DialogTitle>
+          </DialogHeader>
+          {selectedItem && <GradingForm item={selectedItem} />}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
