@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -54,7 +53,7 @@ const CustomerDashboard = () => {
       // Transform the data to ensure grading_details is properly typed
       return (orderData || []).map(order => ({
         ...order,
-        grading_details: order.grading_details as GradingDetails | null
+        grading_details: order.grading_details as unknown as GradingDetails | null
       })) as Order[];
     },
   });
