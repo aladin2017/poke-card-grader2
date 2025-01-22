@@ -66,10 +66,16 @@ serve(async (req) => {
       throw new Error("No checkout URL returned from Stripe");
     }
 
-    // Create the order in the database
+    // Initialize Supabase client
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') || '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
     );
 
     // Create the order record
@@ -79,12 +85,15 @@ serve(async (req) => {
         service_type: serviceType,
         total_amount: totalAmount,
         stripe_session_id: session.id,
+        payment_status: 'pending'
       });
 
     if (orderError) {
       console.error('Error creating order:', orderError);
       throw orderError;
     }
+
+    console.log('Creating card grading records...');
 
     // Create card grading records for each card
     for (const card of cards) {
@@ -114,6 +123,8 @@ serve(async (req) => {
         throw gradingError;
       }
     }
+
+    console.log('Successfully created order and card grading records');
 
     return new Response(
       JSON.stringify({ 
