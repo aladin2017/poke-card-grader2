@@ -27,6 +27,7 @@ interface CardGrading {
   card_name: string;
   order_id: string;
   customer_name: string;
+  ean8: string;
   grading_details: GradingDetails | null;
 }
 
@@ -50,6 +51,7 @@ export function GradingHistory() {
             card_name,
             order_id,
             customer_name,
+            ean8,
             grading_details
           )
         `)
@@ -60,7 +62,6 @@ export function GradingHistory() {
         throw error;
       }
 
-      // Transform the data to match our HistoryItem interface
       return (data || []).map(item => ({
         ...item,
         card_gradings: item.card_gradings ? {
@@ -90,7 +91,7 @@ export function GradingHistory() {
               <TableHead>Customer</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Grade</TableHead>
-              <TableHead>Notes</TableHead>
+              <TableHead>EAN8</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -118,7 +119,7 @@ export function GradingHistory() {
                 <TableCell>
                   {item.card_gradings?.grading_details?.finalGrade || '-'}
                 </TableCell>
-                <TableCell>{item.notes || '-'}</TableCell>
+                <TableCell>{item.card_gradings?.ean8 || '-'}</TableCell>
               </TableRow>
             ))}
           </TableBody>
