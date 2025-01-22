@@ -19,7 +19,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { X } from "lucide-react";
@@ -228,6 +227,7 @@ export function GradingForm() {
             customer_country: data.country,
             service_type: data.serviceType,
             shipping_method: data.shippingMethod,
+            status: 'pending'
           });
       });
 
@@ -593,10 +593,6 @@ export function GradingForm() {
                   <div className="flex justify-between">
                     <span>Shipping ({form.getValues("shippingMethod")})</span>
                     <span>${form.getValues("shippingMethod") === "standard" ? 10 : 25}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Insurance (1%)</span>
-                    <span>$0.00</span>
                   </div>
                   <div className="border-t pt-2 mt-2">
                     <div className="flex justify-between font-semibold">

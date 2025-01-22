@@ -19,6 +19,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Order {
   id: string;
@@ -40,39 +41,6 @@ interface DataTableProps {
   showAll?: boolean;
 }
 
-const generateEAN8 = (existingEAN8s: string[]): string => {
-  const generateNumber = () => {
-    let num = '';
-    for(let i = 0; i < 7; i++) {
-      num += Math.floor(Math.random() * 10);
-    }
-    return num;
-  };
-
-  const calculateCheckDigit = (digits: string): number => {
-    let sum = 0;
-    for(let i = 0; i < digits.length; i++) {
-      const digit = parseInt(digits[i]);
-      sum += digit * (i % 2 === 0 ? 3 : 1);
-    }
-    const checkDigit = (10 - (sum % 10)) % 10;
-    return checkDigit;
-  };
-
-  const generateUniqueEAN8 = (): string => {
-    const digits = generateNumber();
-    const checkDigit = calculateCheckDigit(digits);
-    const ean8 = digits + checkDigit;
-    
-    if (existingEAN8s.includes(ean8)) {
-      return generateUniqueEAN8();
-    }
-    return ean8;
-  };
-
-  return generateUniqueEAN8();
-};
-
 export function DataTable({ showAll = false }: DataTableProps) {
   const { toast } = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
@@ -80,30 +48,74 @@ export function DataTable({ showAll = false }: DataTableProps) {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
 
   useEffect(() => {
-    const storedOrders = localStorage.getItem('gradingOrders');
-    if (storedOrders) {
-      const parsedOrders = JSON.parse(storedOrders);
-      const formattedOrders: Order[] = parsedOrders.map((order: any, index: number) => ({
-        id: (index + 1).toString(),
-        customer: `${order.fullName}`,
-        cards: order.cards.map((card: any) => ({
-          name: card.name || 'Unnamed Card',
-          condition: card.condition || 'Unknown',
-          status: "pending" as const,
-          priority: "normal" as const,
-          notes: card.notes
-        })),
-        status: "pending" as const,
-        date: new Date().toISOString().split('T')[0],
-        total: calculateTotal(order.package, order.cards.length),
-      }));
-      setOrders(formattedOrders);
-    }
-  }, []);
+    fetchOrders();
+  }, [showAll]);
 
-  const calculateTotal = (packageType: string, cardCount: number) => {
-    const basePrice = packageType === 'premium' ? 25 : 15;
-    return `€${basePrice * cardCount}.00`;
+  const fetchOrders = async () => {
+    try {
+      const { data: cardGradings, error } = await supabase
+        .from('card_gradings')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Group cards by order_id
+      const orderMap = new Map();
+      cardGradings?.forEach(grading => {
+        if (!orderMap.has(grading.order_id)) {
+          orderMap.set(grading.order_id, {
+            id: grading.order_id,
+            customer: grading.customer_name,
+            cards: [],
+            status: grading.status,
+            date: new Date(grading.created_at).toLocaleDateString(),
+            total: calculateTotal(grading.service_type, 1, grading.shipping_method),
+          });
+        }
+        
+        orderMap.get(grading.order_id).cards.push({
+          name: grading.card_name,
+          condition: 'Pending Review',
+          ean8: grading.ean8,
+          status: grading.status,
+          notes: grading.notes,
+        });
+
+        // Update total based on all cards
+        const order = orderMap.get(grading.order_id);
+        order.total = calculateTotal(
+          grading.service_type,
+          order.cards.length,
+          grading.shipping_method
+        );
+      });
+
+      const formattedOrders = Array.from(orderMap.values());
+      setOrders(formattedOrders);
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to fetch orders. Please try again.",
+      });
+    }
+  };
+
+  const calculateTotal = (serviceType: string, cardCount: number, shippingMethod: string) => {
+    const servicePrice = {
+      standard: 15,
+      medium: 20,
+      priority: 25,
+    }[serviceType] || 15;
+
+    const shippingPrice = {
+      standard: 10,
+      express: 25,
+    }[shippingMethod] || 10;
+
+    return `$${(servicePrice * cardCount) + shippingPrice}.00`;
   };
 
   const handleViewOrder = (order: Order) => {
@@ -111,86 +123,80 @@ export function DataTable({ showAll = false }: DataTableProps) {
     setIsViewDialogOpen(true);
   };
 
-  const moveToQueue = (orderId: string) => {
-    const existingEAN8s = orders.flatMap(order => 
-      order.cards.map(card => card.ean8 || '')
-    ).filter(Boolean);
+  const moveToQueue = async (orderId: string) => {
+    try {
+      const { error } = await supabase
+        .from('card_gradings')
+        .update({ status: 'queued' })
+        .eq('order_id', orderId);
 
-    const updatedOrders = orders.map(order => {
-      if (order.id === orderId) {
-        const updatedCards = order.cards.map(card => ({
-          ...card,
-          status: "queued" as const,
-          ean8: generateEAN8(existingEAN8s)
-        }));
+      if (error) throw error;
 
-        return {
-          ...order,
-          status: "queued" as const,
-          cards: updatedCards
-        };
-      }
-      return order;
-    });
+      toast({
+        title: "Order Queued",
+        description: `Order #${orderId} has been moved to the queue.`,
+      });
 
-    setOrders(updatedOrders);
-    localStorage.setItem('gradingOrders', JSON.stringify(updatedOrders));
-
-    toast({
-      title: "Comandă în procesare",
-      description: `Comanda #${orderId} a fost mutată în coada de gradare.`,
-    });
+      fetchOrders();
+    } catch (error) {
+      console.error('Error updating order:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update order status. Please try again.",
+      });
+    }
   };
 
-  const markAsCompleted = (orderId: string) => {
-    const updatedOrders = orders.map(order => {
-      if (order.id === orderId) {
-        const updatedCards = order.cards.map(card => ({
-          ...card,
-          status: "completed" as const
-        }));
-        return { 
-          ...order, 
-          status: "completed" as const,
-          cards: updatedCards
-        };
-      }
-      return order;
-    });
-    
-    setOrders(updatedOrders);
-    localStorage.setItem('gradingOrders', JSON.stringify(updatedOrders));
+  const markAsCompleted = async (orderId: string) => {
+    try {
+      const { error } = await supabase
+        .from('card_gradings')
+        .update({ status: 'completed' })
+        .eq('order_id', orderId);
 
-    toast({
-      title: "Gradare finalizată",
-      description: `Comanda #${orderId} a fost finalizată cu succes.`,
-    });
+      if (error) throw error;
+
+      toast({
+        title: "Order Completed",
+        description: `Order #${orderId} has been marked as completed.`,
+      });
+
+      fetchOrders();
+    } catch (error) {
+      console.error('Error updating order:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update order status. Please try again.",
+      });
+    }
   };
 
-  const handleRejectOrder = (orderId: string) => {
-    const updatedOrders = orders.map(order => {
-      if (order.id === orderId) {
-        const updatedCards = order.cards.map(card => ({
-          ...card,
-          status: "rejected" as const
-        }));
-        return { 
-          ...order, 
-          status: "rejected" as const,
-          cards: updatedCards
-        };
-      }
-      return order;
-    });
-    
-    setOrders(updatedOrders);
-    localStorage.setItem('gradingOrders', JSON.stringify(updatedOrders));
+  const handleRejectOrder = async (orderId: string) => {
+    try {
+      const { error } = await supabase
+        .from('card_gradings')
+        .update({ status: 'rejected' })
+        .eq('order_id', orderId);
 
-    toast({
-      title: "Comandă respinsă",
-      description: `Comanda #${orderId} a fost respinsă.`,
-      variant: "destructive",
-    });
+      if (error) throw error;
+
+      toast({
+        title: "Order Rejected",
+        description: `Order #${orderId} has been rejected.`,
+        variant: "destructive",
+      });
+
+      fetchOrders();
+    } catch (error) {
+      console.error('Error updating order:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update order status. Please try again.",
+      });
+    }
   };
 
   const getStatusBadgeVariant = (status: Order['status']) => {
@@ -213,19 +219,19 @@ export function DataTable({ showAll = false }: DataTableProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{showAll ? "Istoric Gradări" : "Comenzi Active"}</CardTitle>
+        <CardTitle>{showAll ? "Order History" : "Active Orders"}</CardTitle>
       </CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>ID Comandă</TableHead>
-              <TableHead>Client</TableHead>
-              <TableHead>Cărți</TableHead>
+              <TableHead>Order ID</TableHead>
+              <TableHead>Customer</TableHead>
+              <TableHead>Cards</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Dată</TableHead>
+              <TableHead>Date</TableHead>
               <TableHead>Total</TableHead>
-              <TableHead>Acțiuni</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -290,9 +296,9 @@ export function DataTable({ showAll = false }: DataTableProps) {
         <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
           <DialogContent className="max-w-3xl">
             <DialogHeader>
-              <DialogTitle>Detalii Comandă #{selectedOrder?.id}</DialogTitle>
+              <DialogTitle>Order Details #{selectedOrder?.id}</DialogTitle>
               <DialogDescription>
-                Client: {selectedOrder?.customer}
+                Customer: {selectedOrder?.customer}
               </DialogDescription>
             </DialogHeader>
             <div className="mt-4">
@@ -300,17 +306,15 @@ export function DataTable({ showAll = false }: DataTableProps) {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Card</TableHead>
-                    <TableHead>Condiție</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>EAN8</TableHead>
-                    <TableHead>Note</TableHead>
+                    <TableHead>Notes</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {selectedOrder?.cards.map((card, index) => (
                     <TableRow key={index}>
                       <TableCell>{card.name}</TableCell>
-                      <TableCell>{card.condition}</TableCell>
                       <TableCell>
                         <Badge variant={getStatusBadgeVariant(card.status)}>
                           {card.status}
