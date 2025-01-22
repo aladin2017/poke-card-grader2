@@ -24,6 +24,7 @@ const formSchema = z.object({
       language: z.string().min(1, "Language is required"),
       cardName: z.string().min(1, "Card name is required"),
       cardNumber: z.string().min(1, "Card number is required"),
+      cardSet: z.string().min(1, "Card set is required"),
     })
   ),
   shipping: z.object({
@@ -48,7 +49,7 @@ export function CardSubmissionForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      cards: [{ language: "", cardName: "", cardNumber: "" }],
+      cards: [{ language: "", cardName: "", cardNumber: "", cardSet: "" }],
       shipping: {
         firstName: "",
         lastName: "",
@@ -116,7 +117,7 @@ export function CardSubmissionForm() {
                         </Button>
                       )}
                     </div>
-                    <div className="grid gap-4 md:grid-cols-3">
+                    <div className="grid gap-4 md:grid-cols-2">
                       <FormField
                         control={form.control}
                         name={`cards.${index}.language`}
@@ -156,6 +157,19 @@ export function CardSubmissionForm() {
                           </FormItem>
                         )}
                       />
+                      <FormField
+                        control={form.control}
+                        name={`cards.${index}.cardSet`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Card Set</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Base Set" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </div>
                   </CardContent>
                 </Card>
@@ -164,7 +178,7 @@ export function CardSubmissionForm() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => append({ language: "", cardName: "", cardNumber: "" })}
+                onClick={() => append({ language: "", cardName: "", cardNumber: "", cardSet: "" })}
                 className="w-full"
               >
                 Add More Cards
