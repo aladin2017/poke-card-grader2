@@ -2,13 +2,20 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
-import { Form } from "@/components/ui/form";
+import { 
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage 
+} from "@/components/ui/form";
 import { Progress } from "@/components/ui/progress";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
 
 const formSchema = z.object({
-  // Personal Info
   fullName: z.string().min(2, "Numele trebuie să aibă cel puțin 2 caractere"),
   email: z.string().email("Email invalid"),
   phone: z.string().min(10, "Numărul de telefon trebuie să aibă cel puțin 10 caractere"),
@@ -17,19 +24,13 @@ const formSchema = z.object({
   state: z.string().min(2, "Județul trebuie să aibă cel puțin 2 caractere"),
   zipCode: z.string().min(6, "Codul poștal trebuie să aibă cel puțin 6 caractere"),
   country: z.string().min(2, "Țara trebuie să aibă cel puțin 2 caractere"),
-  
-  // Service Info
   serviceType: z.enum(["standard", "medium", "priority"]),
   shippingMethod: z.enum(["standard", "express"]),
-  
-  // Cards
   cards: z.array(z.object({
     name: z.string().min(2, "Numele cardului trebuie să aibă cel puțin 2 caractere"),
     year: z.string().min(4, "Anul trebuie să aibă 4 caractere"),
     set: z.string().min(2, "Setul trebuie să aibă cel puțin 2 caractere")
   })),
-  
-  // Payment
   cardNumber: z.string().min(16, "Numărul cardului trebuie să aibă 16 caractere"),
   expiryDate: z.string().min(5, "Data expirării trebuie să fie în formatul MM/YY"),
   cvc: z.string().min(3, "CVC-ul trebuie să aibă 3 caractere")
@@ -71,7 +72,6 @@ export function NewGradingForm() {
         return;
       }
 
-      // Final submission
       console.log("Form submitted:", values);
       toast({
         title: "Succes!",
@@ -93,22 +93,59 @@ export function NewGradingForm() {
         return (
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Informații Personale</h3>
-            {/* Personal Info Fields */}
             <div className="grid grid-cols-2 gap-4">
-              <Form.Field
+              <FormField
                 control={form.control}
                 name="fullName"
                 render={({ field }) => (
-                  <Form.Item>
-                    <Form.Label>Nume Complet</Form.Label>
-                    <Form.Control>
-                      <input className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2" {...field} />
-                    </Form.Control>
-                    <Form.Message />
-                  </Form.Item>
+                  <FormItem>
+                    <FormLabel>Nume Complet</FormLabel>
+                    <FormControl>
+                      <Input className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
               />
-              {/* Add other personal info fields similarly */}
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Telefon</FormLabel>
+                    <FormControl>
+                      <Input className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="address"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Adresă</FormLabel>
+                    <FormControl>
+                      <Input className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
           </div>
         );
@@ -116,14 +153,94 @@ export function NewGradingForm() {
         return (
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Carduri pentru Gradare</h3>
-            {/* Cards Fields */}
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="cards.0.name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nume Card</FormLabel>
+                    <FormControl>
+                      <Input className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="cards.0.year"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>An</FormLabel>
+                    <FormControl>
+                      <Input className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="cards.0.set"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Set</FormLabel>
+                    <FormControl>
+                      <Input className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </div>
         );
       case 3:
         return (
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Plată</h3>
-            {/* Payment Fields */}
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="cardNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Număr Card</FormLabel>
+                    <FormControl>
+                      <Input className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="expiryDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Data Expirare</FormLabel>
+                    <FormControl>
+                      <Input className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="cvc"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>CVC</FormLabel>
+                    <FormControl>
+                      <Input className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </div>
         );
       default:
