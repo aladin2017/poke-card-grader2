@@ -38,6 +38,7 @@ export const Header = ({ session }: HeaderProps) => {
         .single()
         .then(({ data, error }) => {
           if (!error && data) {
+            console.log('User role:', data.role); // Debug log
             setUserRole(data.role);
           } else {
             console.error('Error fetching user role:', error);
@@ -70,6 +71,7 @@ export const Header = ({ session }: HeaderProps) => {
   };
 
   const handleDashboardClick = () => {
+    console.log('Current user role:', userRole); // Debug log
     if (userRole === 'admin') {
       navigate('/admin');
     } else {
