@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/table";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Json } from "@/integrations/supabase/types";
 
 interface GradingDetails {
   centering: number;
@@ -49,7 +50,12 @@ const CustomerDashboard = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return orderData as Order[];
+      
+      // Transform the data to ensure grading_details is properly typed
+      return (orderData || []).map(order => ({
+        ...order,
+        grading_details: order.grading_details as GradingDetails | null
+      })) as Order[];
     },
   });
 
