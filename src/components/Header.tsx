@@ -39,12 +39,21 @@ export const Header = ({ session }: HeaderProps) => {
         .then(({ data, error }) => {
           if (!error && data) {
             setUserRole(data.role);
+          } else {
+            console.error('Error fetching user role:', error);
+            toast({
+              variant: "destructive",
+              title: "Error",
+              description: "Could not fetch user role. Please try again later.",
+            });
           }
         });
+    } else {
+      setUserRole(null);
     }
 
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [session]);
+  }, [session, toast]);
 
   const handleSignOut = async () => {
     try {
@@ -57,6 +66,14 @@ export const Header = ({ session }: HeaderProps) => {
         title: "Error signing out",
         description: error.message,
       });
+    }
+  };
+
+  const handleDashboardClick = () => {
+    if (userRole === 'admin') {
+      navigate('/admin');
+    } else {
+      navigate('/dashboard');
     }
   };
 
@@ -84,23 +101,13 @@ export const Header = ({ session }: HeaderProps) => {
           <NavigationMenuList className="flex items-center space-x-4">
             {session ? (
               <>
-                {userRole === 'admin' ? (
-                  <Button
-                    variant="ghost"
-                    className={`${isScrolled ? 'text-secondary hover:text-secondary/80' : 'text-primary hover:text-primary/80'}`}
-                    onClick={() => navigate('/admin')}
-                  >
-                    Admin Dashboard
-                  </Button>
-                ) : (
-                  <Button
-                    variant="ghost"
-                    className={`${isScrolled ? 'text-secondary hover:text-secondary/80' : 'text-primary hover:text-primary/80'}`}
-                    onClick={() => navigate('/dashboard')}
-                  >
-                    My Dashboard
-                  </Button>
-                )}
+                <Button
+                  variant="ghost"
+                  className={`${isScrolled ? 'text-secondary hover:text-secondary/80' : 'text-primary hover:text-primary/80'}`}
+                  onClick={handleDashboardClick}
+                >
+                  {userRole === 'admin' ? 'Admin Dashboard' : 'My Dashboard'}
+                </Button>
                 <Button
                   variant="ghost"
                   className={`${isScrolled ? 'text-secondary hover:text-secondary/80' : 'text-primary hover:text-primary/80'}`}
