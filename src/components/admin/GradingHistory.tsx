@@ -79,26 +79,29 @@ export function GradingHistory({ session }: GradingHistoryProps) {
         return [];
       }
 
-      const { data, error } = await supabase
+      // Fetch both card gradings and their history
+      const { data: gradings, error: gradingsError } = await supabase
         .from('card_gradings')
-        .select('*')
+        .select(`
+          *,
+          card_grading_history (
+            *
+          )
+        `)
         .in('status', ['completed', 'rejected'])
         .order('graded_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching history:', error);
+      if (gradingsError) {
+        console.error('Error fetching history:', gradingsError);
         toast({
           variant: "destructive",
           title: "Error",
           description: "Failed to fetch grading history. Please try again.",
         });
-        throw error;
+        throw gradingsError;
       }
 
-      return (data || []).map(item => ({
-        ...item,
-        grading_details: isGradingDetails(item.grading_details) ? item.grading_details : null
-      }));
+      return gradings || [];
     },
     enabled: !!session?.user?.id,
   });
@@ -122,6 +125,7 @@ export function GradingHistory({ session }: GradingHistoryProps) {
               <TableHead>Customer</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Grade</TableHead>
+              <TableHead>Notes</TableHead>
               <TableHead>EAN8</TableHead>
             </TableRow>
           </TableHeader>
@@ -139,20 +143,23 @@ export function GradingHistory({ session }: GradingHistoryProps) {
                     variant={
                       item.status === "completed"
                         ? "default"
-                        : item.status === "in_progress"
-                        ? "secondary"
+                        : item.status === "rejected"
+                        ? "destructive"
                         : "outline"
                     }
                   >
-                    {item.status.replace("_", " ")}
+                    {item.status}
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  {item.grading_details && (
+                  {item.grading_details && isGradingDetails(item.grading_details) && (
                     <span className={cn("font-bold", getGradeColor(item.grading_details.finalGrade))}>
                       {item.grading_details.finalGrade}
                     </span>
                   )}
+                </TableCell>
+                <TableCell>
+                  {item.notes || '-'}
                 </TableCell>
                 <TableCell>
                   <span className="font-mono">{item.ean8}</span>
