@@ -92,7 +92,7 @@ const getPricePerCard = (serviceType: string) => {
     express: 25,
     premium: 35
   };
-  return prices[serviceType.toLowerCase()] || 15;
+  return prices[serviceType.toLowerCase()] || 12;
 };
 
 const getShippingCost = (country: string) => {

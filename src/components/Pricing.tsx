@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 
 const plans = [
   {
-    name: "BULK",
+    name: "STANDARD",
     price: "12",
     features: [
       "1-35 Cards Minimum",
@@ -15,27 +15,7 @@ const plans = [
     ],
   },
   {
-    name: "STANDARD",
-    price: "15",
-    features: [
-      "1-35 Cards Minimum",
-      "20-25 Business days estimate",
-      "Every case sleeved",
-      "Sub grades online included"
-    ],
-  },
-  {
-    name: "MEDIUM",
-    price: "20",
-    features: [
-      "1-35 Cards Minimum",
-      "20 Business days estimate",
-      "Every case sleeved",
-      "Sub grades online included"
-    ],
-  },
-  {
-    name: "PRIORITY",
+    name: "EXPRESS",
     price: "25",
     features: [
       "1-35 Cards",
@@ -45,13 +25,14 @@ const plans = [
     ],
   },
   {
-    name: "EXPRESS",
-    price: "30",
+    name: "PREMIUM",
+    price: "35",
     features: [
       "1-50 Cards",
       "8 Business days estimate",
       "Every case sleeved",
-      "Sub grades online included"
+      "Sub grades online included",
+      "Priority Support"
     ],
   }
 ];
@@ -65,7 +46,7 @@ export const Pricing = () => {
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
           Pachete de Servicii
         </h2>
-        <div className="grid md:grid-cols-3 lg:grid-cols-5 gap-8">
+        <div className="grid md:grid-cols-3 gap-8">
           {plans.map((plan, index) => (
             <Card key={index} className="relative hover:shadow-lg transition-shadow bg-white border-gray-200">
               <CardHeader>
