@@ -123,7 +123,6 @@ export function GradingForm() {
   };
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
-    // For step 1, validate required fields before proceeding
     if (step === 1) {
       const requiredFields = ['fullName', 'email', 'phone', 'address', 'city', 'state', 'zipCode', 'country', 'serviceType', 'shippingMethod'];
       const missingFields = requiredFields.filter(field => !data[field as keyof typeof data]);
@@ -140,7 +139,6 @@ export function GradingForm() {
       return;
     }
 
-    // For step 2, validate cards before proceeding
     if (step === 2) {
       const isCardsValid = data.cards.every(card => 
         card.name && card.year && card.set
@@ -158,7 +156,6 @@ export function GradingForm() {
       return;
     }
 
-    // For step 3 (final step), submit the form
     if (step === 3) {
       const order = {
         ...data,
