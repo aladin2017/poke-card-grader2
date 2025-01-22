@@ -1,6 +1,7 @@
 import { Check } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 const plans = [
   {
@@ -56,6 +57,8 @@ const plans = [
 ];
 
 export const Pricing = () => {
+  const navigate = useNavigate();
+
   return (
     <section className="py-20 bg-white">
       <div className="container">
@@ -81,6 +84,7 @@ export const Pricing = () => {
                 <Button 
                   className="w-full mt-6"
                   variant="default"
+                  onClick={() => navigate(`/submit/${plan.name.toLowerCase()}`)}
                 >
                   Submit Now
                 </Button>

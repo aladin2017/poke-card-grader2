@@ -10,6 +10,7 @@ import { Footer } from "./components/Footer";
 import Index from "./pages/Index";
 import Admin from "./pages/Admin";
 import Auth from "./pages/Auth";
+import { CardSubmissionForm } from "./components/CardSubmissionForm";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +48,7 @@ const App = () => {
             <main className="flex-1">
               <Routes>
                 <Route path="/" element={<Index />} />
+                <Route path="/submit/:serviceType" element={<CardSubmissionForm />} />
                 <Route
                   path="/admin"
                   element={
