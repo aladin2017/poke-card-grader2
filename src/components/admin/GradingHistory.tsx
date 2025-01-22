@@ -11,6 +11,9 @@ import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
+import { Database } from "@/integrations/supabase/types";
+
+type OrderStatus = Database["public"]["Enums"]["order_status"];
 
 interface GradingDetails {
   centering: number;
@@ -30,13 +33,13 @@ interface CardGrading {
 interface HistoryItem {
   id: string;
   changed_at: string;
-  status: string;
+  status: OrderStatus;
   notes: string | null;
   card_gradings: CardGrading | null;
 }
 
 export function GradingHistory() {
-  const { data: historyItems = [], isLoading } = useQuery<HistoryItem[]>({
+  const { data: historyItems = [], isLoading } = useQuery({
     queryKey: ['grading-history'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -57,7 +60,14 @@ export function GradingHistory() {
         throw error;
       }
 
-      return data || [];
+      // Transform the data to match our HistoryItem interface
+      return (data || []).map(item => ({
+        ...item,
+        card_gradings: item.card_gradings ? {
+          ...item.card_gradings,
+          grading_details: item.card_gradings.grading_details as GradingDetails | null
+        } : null
+      })) as HistoryItem[];
     },
   });
 
