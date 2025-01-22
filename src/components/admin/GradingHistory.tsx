@@ -25,6 +25,10 @@ interface GradingDetails {
   finalGrade: number;
 }
 
+interface GradingHistoryProps {
+  session: any;
+}
+
 const getGradeColor = (grade: number) => {
   if (grade >= 9) return "text-green-500";
   if (grade >= 7) return "text-yellow-500";
@@ -43,15 +47,13 @@ const isGradingDetails = (details: any): details is GradingDetails => {
   );
 };
 
-export function GradingHistory() {
+export function GradingHistory({ session }: GradingHistoryProps) {
   const { toast } = useToast();
   
   const { data: historyItems = [], isLoading } = useQuery({
-    queryKey: ['grading-history'],
+    queryKey: ['grading-history', session?.user?.id],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
+      if (!session?.user?.id) {
         toast({
           variant: "destructive",
           title: "Error",
@@ -64,7 +66,7 @@ export function GradingHistory() {
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('role')
-        .eq('id', user.id)
+        .eq('id', session.user.id)
         .single();
 
       if (profileError || profileData?.role !== 'admin') {
@@ -98,6 +100,7 @@ export function GradingHistory() {
         grading_details: isGradingDetails(item.grading_details) ? item.grading_details : null
       }));
     },
+    enabled: !!session?.user?.id,
   });
 
   if (isLoading) {

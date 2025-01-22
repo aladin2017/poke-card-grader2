@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
@@ -7,10 +7,40 @@ import { StatsCards } from "@/components/admin/StatsCards";
 import { GradingQueue } from "@/components/admin/GradingQueue";
 import { GradingHistory } from "@/components/admin/GradingHistory";
 import { Settings } from "@/components/admin/Settings";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 const Admin = () => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("overview");
+  const [session, setSession] = useState<any>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        navigate('/auth');
+        return;
+      }
+      setSession(session);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        navigate('/auth');
+        return;
+      }
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  if (!session) {
+    return null;
+  }
 
   return (
     <div className="container py-8">
@@ -34,7 +64,7 @@ const Admin = () => {
         </TabsContent>
 
         <TabsContent value="history">
-          <GradingHistory />
+          <GradingHistory session={session} />
         </TabsContent>
 
         <TabsContent value="settings">
