@@ -17,36 +17,50 @@ const Admin = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check session and admin status
     const checkAuth = async () => {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      
-      if (!currentSession) {
+      try {
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        
+        if (!currentSession?.user?.id) {
+          navigate('/auth');
+          return;
+        }
+
+        setSession(currentSession);
+
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', currentSession.user.id)
+          .single();
+
+        if (profileError) {
+          console.error('Error fetching profile:', profileError);
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Could not verify admin status. Please try again later.",
+          });
+          navigate('/');
+          return;
+        }
+
+        if (profileData?.role !== 'admin') {
+          console.log('User is not admin:', profileData?.role);
+          toast({
+            variant: "destructive",
+            title: "Access Denied",
+            description: "You must be an admin to access this page.",
+          });
+          navigate('/');
+          return;
+        }
+
+        setIsAdmin(true);
+      } catch (error) {
+        console.error('Error in checkAuth:', error);
         navigate('/auth');
-        return;
       }
-
-      setSession(currentSession);
-
-      // Check if user is admin
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', currentSession.user.id)
-        .single();
-
-      if (profileError || profileData?.role !== 'admin') {
-        console.error('Not an admin or error:', profileError);
-        toast({
-          variant: "destructive",
-          title: "Access Denied",
-          description: "You must be an admin to access this page.",
-        });
-        navigate('/');
-        return;
-      }
-
-      setIsAdmin(true);
     };
 
     checkAuth();
@@ -54,20 +68,25 @@ const Admin = () => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (!session) {
+      if (!session?.user?.id) {
         navigate('/auth');
         return;
       }
+
       setSession(session);
       
-      // Recheck admin status when auth state changes
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .single();
+      try {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
 
-      if (profileData?.role !== 'admin') {
+        if (profileData?.role !== 'admin') {
+          navigate('/');
+        }
+      } catch (error) {
+        console.error('Error checking admin status:', error);
         navigate('/');
       }
     });

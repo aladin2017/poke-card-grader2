@@ -30,28 +30,38 @@ export const Header = ({ session }: HeaderProps) => {
     window.addEventListener('scroll', handleScroll);
 
     // Fetch user role when session changes
-    if (session?.user) {
-      supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .single()
-        .then(({ data, error }) => {
-          if (!error && data) {
-            console.log('User role:', data.role); // Debug log
-            setUserRole(data.role);
-          } else {
+    const fetchUserRole = async () => {
+      if (session?.user?.id) {
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', session.user.id)
+            .single();
+
+          if (error) {
             console.error('Error fetching user role:', error);
             toast({
               variant: "destructive",
               title: "Error",
               description: "Could not fetch user role. Please try again later.",
             });
+            return;
           }
-        });
-    } else {
-      setUserRole(null);
-    }
+
+          if (data) {
+            console.log('User role:', data.role);
+            setUserRole(data.role);
+          }
+        } catch (error) {
+          console.error('Error in fetchUserRole:', error);
+        }
+      } else {
+        setUserRole(null);
+      }
+    };
+
+    fetchUserRole();
 
     return () => window.removeEventListener('scroll', handleScroll);
   }, [session, toast]);
@@ -71,7 +81,7 @@ export const Header = ({ session }: HeaderProps) => {
   };
 
   const handleDashboardClick = () => {
-    console.log('Current user role:', userRole); // Debug log
+    console.log('Current user role:', userRole);
     if (userRole === 'admin') {
       navigate('/admin');
     } else {
