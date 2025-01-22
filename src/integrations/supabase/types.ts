@@ -95,7 +95,7 @@ export type Database = {
           set_name: string | null
           shipping_method: Database["public"]["Enums"]["shipping_method"]
           status: Database["public"]["Enums"]["order_status"]
-          user_id: string
+          user_id: string | null
           variant: string | null
           year: string | null
         }
@@ -125,7 +125,7 @@ export type Database = {
           set_name?: string | null
           shipping_method: Database["public"]["Enums"]["shipping_method"]
           status?: Database["public"]["Enums"]["order_status"]
-          user_id: string
+          user_id?: string | null
           variant?: string | null
           year?: string | null
         }
@@ -155,7 +155,7 @@ export type Database = {
           set_name?: string | null
           shipping_method?: Database["public"]["Enums"]["shipping_method"]
           status?: Database["public"]["Enums"]["order_status"]
-          user_id?: string
+          user_id?: string | null
           variant?: string | null
           year?: string | null
         }
