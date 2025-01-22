@@ -12,6 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { Database } from "@/integrations/supabase/types";
+import { useToast } from "@/hooks/use-toast";
 
 type OrderStatus = Database["public"]["Enums"]["order_status"];
 
@@ -40,9 +41,28 @@ interface HistoryItem {
 }
 
 export function GradingHistory() {
+  const { toast } = useToast();
+  
   const { data: historyItems = [], isLoading } = useQuery({
     queryKey: ['grading-history'],
     queryFn: async () => {
+      // First check if user is admin
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', (await supabase.auth.getUser()).data.user?.id)
+        .single();
+
+      if (profileError || profileData?.role !== 'admin') {
+        console.error('Error fetching profile or user is not admin:', profileError);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "You don't have permission to view grading history.",
+        });
+        return [];
+      }
+
       const { data, error } = await supabase
         .from('card_grading_history')
         .select(`
@@ -55,10 +75,16 @@ export function GradingHistory() {
             grading_details
           )
         `)
+        .in('status', ['completed', 'rejected'])
         .order('changed_at', { ascending: false });
 
       if (error) {
         console.error('Error fetching history:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to fetch grading history. Please try again.",
+        });
         throw error;
       }
 
