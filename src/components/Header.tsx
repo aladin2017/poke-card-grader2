@@ -13,6 +13,7 @@ interface HeaderProps {
 export const Header = ({ session }: HeaderProps) => {
   const [logo, setLogo] = useState<string>("");
   const [isScrolled, setIsScrolled] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -27,8 +28,23 @@ export const Header = ({ session }: HeaderProps) => {
     };
 
     window.addEventListener('scroll', handleScroll);
+
+    // Fetch user role when session changes
+    if (session?.user) {
+      supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single()
+        .then(({ data, error }) => {
+          if (!error && data) {
+            setUserRole(data.role);
+          }
+        });
+    }
+
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [session]);
 
   const handleSignOut = async () => {
     try {
@@ -68,6 +84,23 @@ export const Header = ({ session }: HeaderProps) => {
           <NavigationMenuList className="flex items-center space-x-4">
             {session ? (
               <>
+                {userRole === 'admin' ? (
+                  <Button
+                    variant="ghost"
+                    className={`${isScrolled ? 'text-secondary hover:text-secondary/80' : 'text-primary hover:text-primary/80'}`}
+                    onClick={() => navigate('/admin')}
+                  >
+                    Admin Dashboard
+                  </Button>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    className={`${isScrolled ? 'text-secondary hover:text-secondary/80' : 'text-primary hover:text-primary/80'}`}
+                    onClick={() => navigate('/dashboard')}
+                  >
+                    My Dashboard
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   className={`${isScrolled ? 'text-secondary hover:text-secondary/80' : 'text-primary hover:text-primary/80'}`}

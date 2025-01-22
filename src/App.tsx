@@ -11,6 +11,7 @@ import Index from "./pages/Index";
 import Admin from "./pages/Admin";
 import Auth from "./pages/Auth";
 import Success from "./pages/Success";
+import CustomerDashboard from "./pages/CustomerDashboard";
 import { CardSubmissionForm } from "./components/CardSubmissionForm";
 
 const queryClient = new QueryClient();
@@ -46,7 +47,7 @@ const App = () => {
           <Sonner />
           <BrowserRouter>
             <Header session={session} />
-            <main className="flex-1 pt-24"> {/* Added padding-top here */}
+            <main className="flex-1 pt-24">
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/submit/:serviceType" element={<CardSubmissionForm />} />
@@ -55,6 +56,12 @@ const App = () => {
                   path="/admin"
                   element={
                     session ? <Admin /> : <Navigate to="/auth" replace />
+                  }
+                />
+                <Route
+                  path="/dashboard"
+                  element={
+                    session ? <CustomerDashboard /> : <Navigate to="/auth" replace />
                   }
                 />
                 <Route
