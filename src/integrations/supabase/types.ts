@@ -229,19 +229,16 @@ export type Database = {
           created_at: string
           email: string
           id: string
-          role: Database["public"]["Enums"]["user_role"] | null
         }
         Insert: {
           created_at?: string
           email: string
           id: string
-          role?: Database["public"]["Enums"]["user_role"] | null
         }
         Update: {
           created_at?: string
           email?: string
           id?: string
-          role?: Database["public"]["Enums"]["user_role"] | null
         }
         Relationships: []
       }
@@ -282,7 +279,7 @@ export type Database = {
       payment_status: "pending" | "completed" | "failed"
       service_type: "standard" | "express" | "premium"
       shipping_method: "standard" | "express" | "international"
-      user_role: "admin" | "user"
+      user_role: "admin" | "customer"
     }
     CompositeTypes: {
       [_ in never]: never
