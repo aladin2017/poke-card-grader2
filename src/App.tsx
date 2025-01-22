@@ -19,17 +19,48 @@ const queryClient = new QueryClient();
 const App = () => {
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      setLoading(false);
+      if (session?.user) {
+        // Fetch user role
+        supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single()
+          .then(({ data, error }) => {
+            if (!error && data) {
+              setUserRole(data.role);
+            }
+            setLoading(false);
+          });
+      } else {
+        setLoading(false);
+      }
     });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      if (session?.user) {
+        // Fetch user role on auth state change
+        supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single()
+          .then(({ data }) => {
+            if (data) {
+              setUserRole(data.role);
+            }
+          });
+      } else {
+        setUserRole(null);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -55,7 +86,11 @@ const App = () => {
                 <Route
                   path="/admin"
                   element={
-                    session ? <Admin /> : <Navigate to="/auth" replace />
+                    session && userRole === 'admin' ? (
+                      <Admin />
+                    ) : (
+                      <Navigate to="/auth" replace />
+                    )
                   }
                 />
                 <Route
