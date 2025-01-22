@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Eye, CheckCircle, XCircle, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -20,21 +20,18 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface Order {
   id: string;
-  customer: string;
-  cards: Array<{
-    name: string;
-    condition: string;
-    ean8?: string;
-    priority?: "high" | "normal";
-    status: "pending" | "queued" | "completed" | "rejected";
-    notes?: string;
-  }>;
+  order_id: string;
+  customer_name: string;
+  customer_email: string;
+  card_name: string;
   status: "pending" | "queued" | "completed" | "rejected";
-  date: string;
-  total: string;
+  created_at: string;
+  service_type: string;
+  shipping_method: string;
 }
 
 interface DataTableProps {
@@ -43,80 +40,38 @@ interface DataTableProps {
 
 export function DataTable({ showAll = false }: DataTableProps) {
   const { toast } = useToast();
-  const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    fetchOrders();
-  }, [showAll]);
-
-  const fetchOrders = async () => {
-    try {
-      const { data: cardGradings, error } = await supabase
+  const { data: orders = [], isLoading } = useQuery({
+    queryKey: ['orders', showAll],
+    queryFn: async () => {
+      const query = supabase
         .from('card_gradings')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (!showAll) {
+        query.in('status', ['pending', 'queued']);
+      } else {
+        query.in('status', ['completed', 'rejected']);
+      }
 
-      // Group cards by order_id
-      const orderMap = new Map();
-      cardGradings?.forEach(grading => {
-        if (!orderMap.has(grading.order_id)) {
-          orderMap.set(grading.order_id, {
-            id: grading.order_id,
-            customer: grading.customer_name,
-            cards: [],
-            status: grading.status,
-            date: new Date(grading.created_at).toLocaleDateString(),
-            total: calculateTotal(grading.service_type, 1, grading.shipping_method),
-          });
-        }
-        
-        orderMap.get(grading.order_id).cards.push({
-          name: grading.card_name,
-          condition: 'Pending Review',
-          ean8: grading.ean8,
-          status: grading.status,
-          notes: grading.notes,
+      const { data, error } = await query;
+
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to fetch orders. Please try again.",
         });
+        throw error;
+      }
 
-        // Update total based on all cards
-        const order = orderMap.get(grading.order_id);
-        order.total = calculateTotal(
-          grading.service_type,
-          order.cards.length,
-          grading.shipping_method
-        );
-      });
-
-      const formattedOrders = Array.from(orderMap.values());
-      setOrders(formattedOrders);
-    } catch (error) {
-      console.error('Error fetching orders:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to fetch orders. Please try again.",
-      });
-    }
-  };
-
-  const calculateTotal = (serviceType: string, cardCount: number, shippingMethod: string) => {
-    const servicePrice = {
-      standard: 15,
-      medium: 20,
-      priority: 25,
-    }[serviceType] || 15;
-
-    const shippingPrice = {
-      standard: 10,
-      express: 25,
-    }[shippingMethod] || 10;
-
-    return `$${(servicePrice * cardCount) + shippingPrice}.00`;
-  };
+      return data || [];
+    },
+  });
 
   const handleViewOrder = (order: Order) => {
     setSelectedOrder(order);
@@ -137,7 +92,7 @@ export function DataTable({ showAll = false }: DataTableProps) {
         description: `Order #${orderId} has been moved to the queue.`,
       });
 
-      fetchOrders();
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
     } catch (error) {
       console.error('Error updating order:', error);
       toast({
@@ -162,7 +117,7 @@ export function DataTable({ showAll = false }: DataTableProps) {
         description: `Order #${orderId} has been marked as completed.`,
       });
 
-      fetchOrders();
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
     } catch (error) {
       console.error('Error updating order:', error);
       toast({
@@ -188,7 +143,7 @@ export function DataTable({ showAll = false }: DataTableProps) {
         variant: "destructive",
       });
 
-      fetchOrders();
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
     } catch (error) {
       console.error('Error updating order:', error);
       toast({
@@ -212,9 +167,9 @@ export function DataTable({ showAll = false }: DataTableProps) {
     }
   };
 
-  const displayedOrders = showAll 
-    ? orders.filter(order => order.status === "completed" || order.status === "rejected")
-    : orders.filter(order => order.status === "pending" || order.status === "queued");
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <Card>
@@ -227,26 +182,26 @@ export function DataTable({ showAll = false }: DataTableProps) {
             <TableRow>
               <TableHead>Order ID</TableHead>
               <TableHead>Customer</TableHead>
-              <TableHead>Cards</TableHead>
+              <TableHead>Card</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Date</TableHead>
-              <TableHead>Total</TableHead>
+              <TableHead>Service</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {displayedOrders.map((order) => (
+            {orders.map((order) => (
               <TableRow key={order.id}>
-                <TableCell>#{order.id}</TableCell>
-                <TableCell>{order.customer}</TableCell>
-                <TableCell>{order.cards.length}</TableCell>
+                <TableCell>#{order.order_id}</TableCell>
+                <TableCell>{order.customer_name}</TableCell>
+                <TableCell>{order.card_name}</TableCell>
                 <TableCell>
                   <Badge variant={getStatusBadgeVariant(order.status)}>
                     {order.status}
                   </Badge>
                 </TableCell>
-                <TableCell>{order.date}</TableCell>
-                <TableCell>{order.total}</TableCell>
+                <TableCell>{new Date(order.created_at).toLocaleDateString()}</TableCell>
+                <TableCell>{order.service_type}</TableCell>
                 <TableCell>
                   <div className="flex gap-2">
                     <Button 
@@ -262,7 +217,7 @@ export function DataTable({ showAll = false }: DataTableProps) {
                           variant="ghost" 
                           size="icon" 
                           className="text-blue-600"
-                          onClick={() => moveToQueue(order.id)}
+                          onClick={() => moveToQueue(order.order_id)}
                         >
                           <Clock className="h-4 w-4" />
                         </Button>
@@ -270,7 +225,7 @@ export function DataTable({ showAll = false }: DataTableProps) {
                           variant="ghost" 
                           size="icon" 
                           className="text-red-600"
-                          onClick={() => handleRejectOrder(order.id)}
+                          onClick={() => handleRejectOrder(order.order_id)}
                         >
                           <XCircle className="h-4 w-4" />
                         </Button>
@@ -281,7 +236,7 @@ export function DataTable({ showAll = false }: DataTableProps) {
                         variant="ghost" 
                         size="icon" 
                         className="text-green-600"
-                        onClick={() => markAsCompleted(order.id)}
+                        onClick={() => markAsCompleted(order.order_id)}
                       >
                         <CheckCircle className="h-4 w-4" />
                       </Button>
@@ -296,9 +251,9 @@ export function DataTable({ showAll = false }: DataTableProps) {
         <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
           <DialogContent className="max-w-3xl">
             <DialogHeader>
-              <DialogTitle>Order Details #{selectedOrder?.id}</DialogTitle>
+              <DialogTitle>Order Details #{selectedOrder?.order_id}</DialogTitle>
               <DialogDescription>
-                Customer: {selectedOrder?.customer}
+                Customer: {selectedOrder?.customer_name}
               </DialogDescription>
             </DialogHeader>
             <div className="mt-4">
@@ -307,25 +262,23 @@ export function DataTable({ showAll = false }: DataTableProps) {
                   <TableRow>
                     <TableHead>Card</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>EAN8</TableHead>
-                    <TableHead>Notes</TableHead>
+                    <TableHead>Service</TableHead>
+                    <TableHead>Shipping</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {selectedOrder?.cards.map((card, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{card.name}</TableCell>
+                  {selectedOrder && (
+                    <TableRow>
+                      <TableCell>{selectedOrder.card_name}</TableCell>
                       <TableCell>
-                        <Badge variant={getStatusBadgeVariant(card.status)}>
-                          {card.status}
+                        <Badge variant={getStatusBadgeVariant(selectedOrder.status)}>
+                          {selectedOrder.status}
                         </Badge>
                       </TableCell>
-                      <TableCell>
-                        <span className="font-mono">{card.ean8 || 'N/A'}</span>
-                      </TableCell>
-                      <TableCell>{card.notes || 'N/A'}</TableCell>
+                      <TableCell>{selectedOrder.service_type}</TableCell>
+                      <TableCell>{selectedOrder.shipping_method}</TableCell>
                     </TableRow>
-                  ))}
+                  )}
                 </TableBody>
               </Table>
             </div>

@@ -22,7 +22,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { QueueItem } from "@/types/grading";
 import {
   Select,
   SelectContent,
@@ -30,6 +29,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const gradeScales = [
   { value: "10+", label: "Pristine (10+)" },
@@ -52,126 +53,111 @@ const getGradeColor = (grade: number) => {
   return "text-red-500";
 };
 
-const generateEAN8 = (existingEAN8s: string[]): string => {
-  const generateNumber = () => {
-    let num = '';
-    for(let i = 0; i < 7; i++) {
-      num += Math.floor(Math.random() * 10);
-    }
-    return num;
-  };
-
-  const calculateCheckDigit = (digits: string): number => {
-    let sum = 0;
-    for(let i = 0; i < digits.length; i++) {
-      const digit = parseInt(digits[i]);
-      sum += digit * (i % 2 === 0 ? 3 : 1);
-    }
-    const checkDigit = (10 - (sum % 10)) % 10;
-    return checkDigit;
-  };
-
-  const generateUniqueEAN8 = (): string => {
-    const digits = generateNumber();
-    const checkDigit = calculateCheckDigit(digits);
-    const ean8 = digits + checkDigit;
-    
-    if (existingEAN8s.includes(ean8)) {
-      return generateUniqueEAN8();
-    }
-    return ean8;
-  };
-
-  return generateUniqueEAN8();
-};
-
 export function GradingQueue() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
-  const [queueItems, setQueueItems] = useState<QueueItem[]>([
-    {
-      id: "1",
-      cardName: "Charizard Base Set",
-      condition: "Near Mint",
-      customer: "John Doe",
-      priority: "high",
-      status: "queued",
-      ean8: generateEAN8([]),
-      orderId: "order1"
-    },
-    {
-      id: "2",
-      cardName: "Pikachu Illustrator",
-      condition: "Excellent",
-      customer: "John Doe",
-      priority: "normal",
-      status: "queued",
-      ean8: generateEAN8([]),
-      orderId: "order1"
-    },
-    {
-      id: "3",
-      cardName: "Black Lotus",
-      condition: "Good",
-      customer: "Jane Smith",
-      priority: "normal",
-      status: "queued",
-      ean8: generateEAN8([]),
-      orderId: "order2"
-    },
-  ]);
+  const { data: queueItems = [], isLoading } = useQuery({
+    queryKey: ['grading-queue'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('card_gradings')
+        .select('*')
+        .eq('status', 'queued')
+        .order('created_at', { ascending: true });
 
-  const customerGroups = queueItems.reduce((groups: { [key: string]: QueueItem[] }, item) => {
-    if (!groups[item.customer]) {
-      groups[item.customer] = [];
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to fetch queue items. Please try again.",
+        });
+        throw error;
+      }
+
+      return data || [];
+    },
+  });
+
+  const handleStartGrading = async (orderId: string) => {
+    try {
+      const { error } = await supabase
+        .from('card_gradings')
+        .update({ status: 'in_progress' })
+        .eq('order_id', orderId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Grading Started",
+        description: `Started grading process for order ${orderId}`,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['grading-queue'] });
+    } catch (error) {
+      console.error('Error updating order:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to start grading. Please try again.",
+      });
     }
-    groups[item.customer].push(item);
-    return groups;
-  }, {});
-
-  const handleStartGrading = (itemId: string) => {
-    setQueueItems(items =>
-      items.map(item =>
-        item.id === itemId
-          ? { ...item, status: "in_progress" }
-          : item
-      )
-    );
-    toast({
-      title: "Grading Started",
-      description: `Started grading process for card ${itemId}`,
-    });
   };
 
-  const handleMarkComplete = (itemId: string) => {
-    setQueueItems(items =>
-      items.map(item =>
-        item.id === itemId
-          ? { ...item, status: "completed" }
-          : item
-      )
-    );
-    toast({
-      title: "Grading Completed",
-      description: `Card ${itemId} has been successfully graded`,
-    });
+  const handleMarkComplete = async (orderId: string) => {
+    try {
+      const { error } = await supabase
+        .from('card_gradings')
+        .update({ status: 'completed' })
+        .eq('order_id', orderId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Grading Completed",
+        description: `Order ${orderId} has been successfully graded`,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['grading-queue'] });
+    } catch (error) {
+      console.error('Error updating order:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to complete grading. Please try again.",
+      });
+    }
   };
 
-  const handleGradingSubmit = (itemId: string, gradingDetails: QueueItem['gradingDetails']) => {
-    setQueueItems(items =>
-      items.map(item =>
-        item.id === itemId
-          ? { ...item, gradingDetails }
-          : item
-      )
-    );
-    toast({
-      title: "Grading Details Saved",
-      description: `Grading details for card ${itemId} have been saved successfully`,
-    });
+  const handleGradingSubmit = async (orderId: string, gradingDetails: any) => {
+    try {
+      const { error } = await supabase
+        .from('card_gradings')
+        .update({
+          grading_details: gradingDetails,
+          status: 'completed'
+        })
+        .eq('order_id', orderId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Grading Details Saved",
+        description: `Grading details for order ${orderId} have been saved successfully`,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['grading-queue'] });
+    } catch (error) {
+      console.error('Error updating order:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to save grading details. Please try again.",
+      });
+    }
   };
 
-  const GradingForm = ({ item }: { item: QueueItem }) => {
+  const GradingForm = ({ item }: { item: any }) => {
     const [centering, setCentering] = useState<number>(0);
     const [surfaces, setSurfaces] = useState<number>(0);
     const [edges, setEdges] = useState<number>(0);
@@ -180,18 +166,33 @@ export function GradingQueue() {
     const [frontImage, setFrontImage] = useState<string>("");
     const [backImage, setBackImage] = useState<string>("");
 
-    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, side: 'front' | 'back') => {
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, side: 'front' | 'back') => {
       const file = e.target.files?.[0];
       if (file) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
+        try {
+          const { data, error } = await supabase.storage
+            .from('card-images')
+            .upload(`${item.order_id}/${side}`, file);
+
+          if (error) throw error;
+
+          const { data: { publicUrl } } = supabase.storage
+            .from('card-images')
+            .getPublicUrl(data.path);
+
           if (side === 'front') {
-            setFrontImage(reader.result as string);
+            setFrontImage(publicUrl);
           } else {
-            setBackImage(reader.result as string);
+            setBackImage(publicUrl);
           }
-        };
-        reader.readAsDataURL(file);
+        } catch (error) {
+          console.error('Error uploading image:', error);
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to upload image. Please try again.",
+          });
+        }
       }
     };
 
@@ -200,13 +201,13 @@ export function GradingQueue() {
       if (!finalGrade) {
         toast({
           variant: "destructive",
-          title: "Eroare",
-          description: "Vă rugăm să selectați o notă finală.",
+          title: "Error",
+          description: "Please select a final grade.",
         });
         return;
       }
 
-      handleGradingSubmit(item.id, {
+      handleGradingSubmit(item.order_id, {
         centering,
         surfaces,
         edges,
@@ -275,10 +276,10 @@ export function GradingQueue() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="finalGrade">Notă finală</Label>
+          <Label htmlFor="finalGrade">Final Grade</Label>
           <Select onValueChange={setFinalGrade} value={finalGrade}>
             <SelectTrigger>
-              <SelectValue placeholder="Selectați nota finală" />
+              <SelectValue placeholder="Select final grade" />
             </SelectTrigger>
             <SelectContent>
               {gradeScales.map((grade) => (
@@ -307,7 +308,6 @@ export function GradingQueue() {
                   alt="Card Front" 
                   className="w-full h-40 object-contain border rounded"
                 />
-                <span className="text-sm text-gray-500">Front Side</span>
               </div>
             )}
           </div>
@@ -327,7 +327,6 @@ export function GradingQueue() {
                   alt="Card Back" 
                   className="w-full h-40 object-contain border rounded"
                 />
-                <span className="text-sm text-gray-500">Back Side</span>
               </div>
             )}
           </div>
@@ -339,6 +338,18 @@ export function GradingQueue() {
       </form>
     );
   };
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  const customerGroups = queueItems.reduce((groups: { [key: string]: any[] }, item) => {
+    if (!groups[item.customer_name]) {
+      groups[item.customer_name] = [];
+    }
+    groups[item.customer_name].push(item);
+    return groups;
+  }, {});
 
   return (
     <Card>
@@ -355,8 +366,7 @@ export function GradingQueue() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Card</TableHead>
-                  <TableHead>Condition</TableHead>
-                  <TableHead>Priority</TableHead>
+                  <TableHead>Service Type</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>EAN8</TableHead>
                   <TableHead>Grade</TableHead>
@@ -366,15 +376,8 @@ export function GradingQueue() {
               <TableBody>
                 {items.map((item) => (
                   <TableRow key={item.id}>
-                    <TableCell>{item.cardName}</TableCell>
-                    <TableCell>{item.condition}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={item.priority === "high" ? "destructive" : "default"}
-                      >
-                        {item.priority}
-                      </Badge>
-                    </TableCell>
+                    <TableCell>{item.card_name}</TableCell>
+                    <TableCell>{item.service_type}</TableCell>
                     <TableCell>
                       <Badge
                         variant={
@@ -392,9 +395,9 @@ export function GradingQueue() {
                       <span className="font-mono">{item.ean8}</span>
                     </TableCell>
                     <TableCell>
-                      {item.gradingDetails && (
-                        <span className={cn("font-bold", getGradeColor(item.gradingDetails.finalGrade))}>
-                          {item.gradingDetails.finalGrade}
+                      {item.grading_details && (
+                        <span className={cn("font-bold", getGradeColor(item.grading_details.finalGrade))}>
+                          {item.grading_details.finalGrade}
                         </span>
                       )}
                     </TableCell>
@@ -404,7 +407,7 @@ export function GradingQueue() {
                           <Button 
                             size="sm" 
                             variant="outline"
-                            onClick={() => handleStartGrading(item.id)}
+                            onClick={() => handleStartGrading(item.order_id)}
                           >
                             Start Grading
                             <ArrowRight className="ml-2 h-4 w-4" />
@@ -424,7 +427,7 @@ export function GradingQueue() {
                               </DialogTrigger>
                               <DialogContent>
                                 <DialogHeader>
-                                  <DialogTitle>Grade Card: {item.cardName}</DialogTitle>
+                                  <DialogTitle>Grade Card: {item.card_name}</DialogTitle>
                                 </DialogHeader>
                                 <GradingForm item={item} />
                               </DialogContent>
@@ -434,7 +437,7 @@ export function GradingQueue() {
                               size="sm" 
                               variant="outline" 
                               className="text-green-600"
-                              onClick={() => handleMarkComplete(item.id)}
+                              onClick={() => handleMarkComplete(item.order_id)}
                             >
                               Mark Complete
                               <CheckCircle className="ml-2 h-4 w-4" />
