@@ -5,24 +5,15 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { X } from "lucide-react";
+import { X, Clock, Zap, CreditCard } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -68,6 +59,9 @@ const formSchema = z.object({
       notes: z.string().optional(),
     })
   ),
+  cardNumber: z.string().optional(),
+  expiryDate: z.string().optional(),
+  cvc: z.string().optional(),
 });
 
 export function GradingForm() {
@@ -89,6 +83,9 @@ export function GradingForm() {
       serviceType: "standard",
       shippingMethod: "standard",
       cards: [{ id: "1", name: "", year: "", set: "" }],
+      cardNumber: "",
+      expiryDate: "",
+      cvc: "",
     },
   });
 
@@ -110,64 +107,6 @@ export function GradingForm() {
     remove(index);
   };
 
-  const validateStep = async () => {
-    const values = form.getValues();
-    
-    if (step === 1) {
-      const isValid = await form.trigger([
-        "fullName",
-        "email",
-        "phone",
-        "address",
-        "city",
-        "state",
-        "zipCode",
-        "country",
-        "serviceType",
-        "shippingMethod",
-      ]);
-      return isValid;
-    }
-    
-    if (step === 2) {
-      const isValid = await form.trigger("cards");
-      return isValid;
-    }
-    
-    return true;
-  };
-
-  const onSubmit = async (data: z.infer<typeof formSchema>) => {
-    if (step < 3) {
-      const isStepValid = await validateStep();
-      if (isStepValid) {
-        setStep(step + 1);
-      }
-      return;
-    }
-
-    const order = {
-      ...data,
-      status: "pending",
-      createdAt: new Date().toISOString(),
-      totalAmount: calculateTotal(data),
-    };
-
-    const existingOrders = localStorage.getItem('gradingOrders');
-    const orders = existingOrders ? JSON.parse(existingOrders) : [];
-    orders.push(order);
-    localStorage.setItem('gradingOrders', JSON.stringify(orders));
-
-    toast({
-      title: "Comandă plasată cu succes!",
-      description: "Vă mulțumim pentru comandă. Veți primi un email de confirmare în curând.",
-    });
-
-    form.reset();
-    setCards([{ id: "1" }]);
-    setStep(1);
-  };
-
   const calculateTotal = (data: z.infer<typeof formSchema>) => {
     const servicePrice = {
       standard: 15,
@@ -183,16 +122,43 @@ export function GradingForm() {
     return (servicePrice * data.cards.length) + shippingPrice;
   };
 
+  const onSubmit = async (data: z.infer<typeof formSchema>) => {
+    if (step < 3) {
+      setStep(step + 1);
+      return;
+    }
+
+    const order = {
+      ...data,
+      status: "pending",
+      createdAt: new Date().toISOString(),
+      totalAmount: calculateTotal(data),
+    };
+
+    localStorage.setItem('gradingOrders', JSON.stringify([
+      ...JSON.parse(localStorage.getItem('gradingOrders') || '[]'),
+      order
+    ]));
+
+    toast({
+      title: "Comandă plasată cu succes!",
+      description: "Vă mulțumim pentru comandă. Veți primi un email de confirmare în curând.",
+    });
+
+    form.reset();
+    setCards([{ id: "1" }]);
+    setStep(1);
+  };
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <div className="space-y-2">
-          <h2 className="text-2xl font-bold tracking-tight">Submit Your Cards</h2>
-          <Progress value={((step - 1) / 2) * 100} className="h-2" />
+          <Progress value={((step - 1) / 2) * 100} className="h-1 bg-gray-800" />
           <div className="flex justify-between text-sm">
-            <span className={step === 1 ? "text-primary" : ""}>Details</span>
-            <span className={step === 2 ? "text-primary" : ""}>Cards</span>
-            <span className={step === 3 ? "text-primary" : ""}>Summary</span>
+            <span className={step === 1 ? "text-pink-500" : "text-gray-500"}>Details</span>
+            <span className={step === 2 ? "text-pink-500" : "text-gray-500"}>Cards</span>
+            <span className={step === 3 ? "text-pink-500" : "text-gray-500"}>Payment</span>
           </div>
         </div>
 
@@ -206,7 +172,7 @@ export function GradingForm() {
                   <FormItem>
                     <FormLabel>Full Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="John Doe" {...field} />
+                      <Input placeholder="John Doe" className="bg-black/5 border-0" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -220,7 +186,7 @@ export function GradingForm() {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input placeholder="john@example.com" {...field} />
+                      <Input placeholder="john@example.com" className="bg-black/5 border-0" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -234,7 +200,7 @@ export function GradingForm() {
                   <FormItem>
                     <FormLabel>Phone</FormLabel>
                     <FormControl>
-                      <Input placeholder="+40 123 456 789" {...field} />
+                      <Input placeholder="+40 123 456 789" className="bg-black/5 border-0" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -248,7 +214,7 @@ export function GradingForm() {
                   <FormItem>
                     <FormLabel>Address</FormLabel>
                     <FormControl>
-                      <Input placeholder="123 Main St" {...field} />
+                      <Input placeholder="123 Main St" className="bg-black/5 border-0" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -262,7 +228,7 @@ export function GradingForm() {
                   <FormItem>
                     <FormLabel>City</FormLabel>
                     <FormControl>
-                      <Input placeholder="New York" {...field} />
+                      <Input placeholder="New York" className="bg-black/5 border-0" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -276,7 +242,7 @@ export function GradingForm() {
                   <FormItem>
                     <FormLabel>State/Province</FormLabel>
                     <FormControl>
-                      <Input placeholder="NY" {...field} />
+                      <Input placeholder="NY" className="bg-black/5 border-0" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -290,7 +256,7 @@ export function GradingForm() {
                   <FormItem>
                     <FormLabel>ZIP/Postal Code</FormLabel>
                     <FormControl>
-                      <Input placeholder="10001" {...field} />
+                      <Input placeholder="10001" className="bg-black/5 border-0" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -304,7 +270,7 @@ export function GradingForm() {
                   <FormItem>
                     <FormLabel>Country</FormLabel>
                     <FormControl>
-                      <Input placeholder="United States" {...field} />
+                      <Input placeholder="United States" className="bg-black/5 border-0" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -313,50 +279,80 @@ export function GradingForm() {
             </div>
 
             <div className="space-y-4">
-              <FormField
-                control={form.control}
-                name="serviceType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Service Type</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select service type" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="standard">Standard ($15/card)</SelectItem>
-                        <SelectItem value="medium">Medium ($20/card)</SelectItem>
-                        <SelectItem value="priority">Priority ($25/card)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div>
+                <h3 className="text-sm font-medium mb-3">Service Type</h3>
+                <div className="grid grid-cols-3 gap-4">
+                  <button
+                    type="button"
+                    className={`p-4 rounded border ${
+                      form.watch("serviceType") === "standard"
+                        ? "border-pink-500 bg-pink-500/5"
+                        : "border-gray-200 hover:border-pink-500"
+                    } transition-colors`}
+                    onClick={() => form.setValue("serviceType", "standard")}
+                  >
+                    <Clock className="w-5 h-5 mx-auto mb-2" />
+                    <div className="text-sm font-medium">STANDARD</div>
+                    <div className="text-pink-500">$15</div>
+                  </button>
+                  <button
+                    type="button"
+                    className={`p-4 rounded border ${
+                      form.watch("serviceType") === "medium"
+                        ? "border-pink-500 bg-pink-500/5"
+                        : "border-gray-200 hover:border-pink-500"
+                    } transition-colors`}
+                    onClick={() => form.setValue("serviceType", "medium")}
+                  >
+                    <Clock className="w-5 h-5 mx-auto mb-2" />
+                    <div className="text-sm font-medium">MEDIUM</div>
+                    <div className="text-pink-500">$20</div>
+                  </button>
+                  <button
+                    type="button"
+                    className={`p-4 rounded border ${
+                      form.watch("serviceType") === "priority"
+                        ? "border-pink-500 bg-pink-500/5"
+                        : "border-gray-200 hover:border-pink-500"
+                    } transition-colors`}
+                    onClick={() => form.setValue("serviceType", "priority")}
+                  >
+                    <Zap className="w-5 h-5 mx-auto mb-2" />
+                    <div className="text-sm font-medium">PRIORITY</div>
+                    <div className="text-pink-500">$25</div>
+                  </button>
+                </div>
+              </div>
 
-              <FormField
-                control={form.control}
-                name="shippingMethod"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Shipping Method</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select shipping method" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="standard">Standard ($10)</SelectItem>
-                        <SelectItem value="express">Express ($25)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div>
+                <h3 className="text-sm font-medium mb-3">Shipping Method</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <button
+                    type="button"
+                    className={`p-4 rounded border ${
+                      form.watch("shippingMethod") === "standard"
+                        ? "border-pink-500 bg-pink-500/5"
+                        : "border-gray-200 hover:border-pink-500"
+                    } transition-colors`}
+                    onClick={() => form.setValue("shippingMethod", "standard")}
+                  >
+                    <div className="text-sm font-medium">STANDARD</div>
+                    <div className="text-pink-500">$10</div>
+                  </button>
+                  <button
+                    type="button"
+                    className={`p-4 rounded border ${
+                      form.watch("shippingMethod") === "express"
+                        ? "border-pink-500 bg-pink-500/5"
+                        : "border-gray-200 hover:border-pink-500"
+                    } transition-colors`}
+                    onClick={() => form.setValue("shippingMethod", "express")}
+                  >
+                    <div className="text-sm font-medium">EXPRESS</div>
+                    <div className="text-pink-500">$25</div>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -364,11 +360,11 @@ export function GradingForm() {
         {step === 2 && (
           <div className="space-y-4">
             {fields.map((card, index) => (
-              <Card key={card.id}>
+              <Card key={card.id} className="bg-black/5 border-0">
                 <CardContent className="pt-6">
                   <div className="grid gap-4">
                     <div className="flex justify-between items-start">
-                      <span className="text-sm font-medium">Card #{index + 1}</span>
+                      <span className="text-sm font-medium text-pink-500">Card #{index + 1}</span>
                       {index > 0 && (
                         <Button
                           type="button"
@@ -389,7 +385,7 @@ export function GradingForm() {
                           <FormItem>
                             <FormLabel>Card Name</FormLabel>
                             <FormControl>
-                              <Input placeholder="Charizard" {...field} />
+                              <Input placeholder="Charizard" className="bg-black/5 border-0" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -403,7 +399,7 @@ export function GradingForm() {
                           <FormItem>
                             <FormLabel>Year</FormLabel>
                             <FormControl>
-                              <Input placeholder="1999" {...field} />
+                              <Input placeholder="1999" className="bg-black/5 border-0" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -417,7 +413,7 @@ export function GradingForm() {
                           <FormItem>
                             <FormLabel>Set</FormLabel>
                             <FormControl>
-                              <Input placeholder="Base Set" {...field} />
+                              <Input placeholder="Base Set" className="bg-black/5 border-0" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -431,7 +427,7 @@ export function GradingForm() {
                           <FormItem>
                             <FormLabel>Card Number</FormLabel>
                             <FormControl>
-                              <Input placeholder="4/102" {...field} />
+                              <Input placeholder="4/102" className="bg-black/5 border-0" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -445,7 +441,7 @@ export function GradingForm() {
                           <FormItem>
                             <FormLabel>Variant (Optional)</FormLabel>
                             <FormControl>
-                              <Input placeholder="Holo" {...field} />
+                              <Input placeholder="Holo" className="bg-black/5 border-0" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -461,6 +457,7 @@ export function GradingForm() {
                             <FormControl>
                               <Input
                                 placeholder="Any special notes about the card"
+                                className="bg-black/5 border-0"
                                 {...field}
                               />
                             </FormControl>
@@ -477,7 +474,7 @@ export function GradingForm() {
             <Button
               type="button"
               variant="outline"
-              className="w-full"
+              className="w-full border-dashed"
               onClick={addCard}
             >
               Add Another Card
@@ -487,7 +484,7 @@ export function GradingForm() {
 
         {step === 3 && (
           <div className="space-y-6">
-            <Card>
+            <Card className="bg-black/5 border-0">
               <CardContent className="pt-6">
                 <h3 className="text-lg font-semibold mb-4">Order Summary</h3>
                 <div className="space-y-2">
@@ -503,7 +500,7 @@ export function GradingForm() {
                     <span>Insurance (1%)</span>
                     <span>$0.00</span>
                   </div>
-                  <div className="border-t pt-2 mt-2">
+                  <div className="border-t border-gray-200 pt-2 mt-2">
                     <div className="flex justify-between font-semibold">
                       <span>Total</span>
                       <span>${calculateTotal(form.getValues())}.00</span>
@@ -512,6 +509,68 @@ export function GradingForm() {
                 </div>
               </CardContent>
             </Card>
+
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Payment Details</h3>
+              <FormField
+                control={form.control}
+                name="cardNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Card Number</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input 
+                          placeholder="4242 4242 4242 4242" 
+                          className="bg-black/5 border-0 pl-10" 
+                          {...field}
+                        />
+                        <CreditCard className="absolute left-3 top-2.5 h-5 w-5 text-gray-500" />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="expiryDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Expiry Date</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="MM/YY" 
+                          className="bg-black/5 border-0" 
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="cvc"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>CVC</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="123" 
+                          className="bg-black/5 border-0" 
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
           </div>
         )}
 
@@ -521,13 +580,14 @@ export function GradingForm() {
               type="button"
               variant="outline"
               onClick={() => setStep(step - 1)}
+              className="bg-transparent"
             >
               Previous
             </Button>
           )}
           <Button
             type="submit"
-            className={step === 1 ? "w-full" : ""}
+            className={`${step === 3 ? 'bg-pink-500 hover:bg-pink-600' : 'bg-pink-500 hover:bg-pink-600'} ${step === 1 ? "w-full" : ""}`}
           >
             {step === 3 ? `Pay $${calculateTotal(form.getValues())}.00` : "Next"}
           </Button>
