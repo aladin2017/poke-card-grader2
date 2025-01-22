@@ -9,6 +9,81 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      card_gradings: {
+        Row: {
+          card_name: string
+          card_number: string | null
+          created_at: string
+          customer_address: string | null
+          customer_city: string | null
+          customer_country: string | null
+          customer_email: string
+          customer_name: string
+          customer_phone: string | null
+          customer_state: string | null
+          customer_zip: string | null
+          ean8: string
+          id: string
+          notes: string | null
+          order_id: string
+          service_type: string
+          set_name: string | null
+          shipping_method: string
+          status: string
+          user_id: string
+          variant: string | null
+          year: string | null
+        }
+        Insert: {
+          card_name: string
+          card_number?: string | null
+          created_at?: string
+          customer_address?: string | null
+          customer_city?: string | null
+          customer_country?: string | null
+          customer_email: string
+          customer_name: string
+          customer_phone?: string | null
+          customer_state?: string | null
+          customer_zip?: string | null
+          ean8: string
+          id?: string
+          notes?: string | null
+          order_id: string
+          service_type: string
+          set_name?: string | null
+          shipping_method: string
+          status?: string
+          user_id: string
+          variant?: string | null
+          year?: string | null
+        }
+        Update: {
+          card_name?: string
+          card_number?: string | null
+          created_at?: string
+          customer_address?: string | null
+          customer_city?: string | null
+          customer_country?: string | null
+          customer_email?: string
+          customer_name?: string
+          customer_phone?: string | null
+          customer_state?: string | null
+          customer_zip?: string | null
+          ean8?: string
+          id?: string
+          notes?: string | null
+          order_id?: string
+          service_type?: string
+          set_name?: string | null
+          shipping_method?: string
+          status?: string
+          user_id?: string
+          variant?: string | null
+          year?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string

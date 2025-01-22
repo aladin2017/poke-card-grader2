@@ -25,6 +25,7 @@ import { Progress } from "@/components/ui/progress";
 import { X } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const formSchema = z.object({
   fullName: z.string().min(2, {
@@ -69,6 +70,39 @@ const formSchema = z.object({
     })
   ),
 });
+
+const generateEAN8 = (existingEAN8s: string[]): string => {
+  const generateNumber = () => {
+    let num = '';
+    for(let i = 0; i < 7; i++) {
+      num += Math.floor(Math.random() * 10);
+    }
+    return num;
+  };
+
+  const calculateCheckDigit = (digits: string): number => {
+    let sum = 0;
+    for(let i = 0; i < digits.length; i++) {
+      const digit = parseInt(digits[i]);
+      sum += digit * (i % 2 === 0 ? 3 : 1);
+    }
+    const checkDigit = (10 - (sum % 10)) % 10;
+    return checkDigit;
+  };
+
+  const generateUniqueEAN8 = (): string => {
+    const digits = generateNumber();
+    const checkDigit = calculateCheckDigit(digits);
+    const ean8 = digits + checkDigit;
+    
+    if (existingEAN8s.includes(ean8)) {
+      return generateUniqueEAN8();
+    }
+    return ean8;
+  };
+
+  return generateUniqueEAN8();
+};
 
 export function GradingForm() {
   const { toast } = useToast();
@@ -146,26 +180,87 @@ export function GradingForm() {
       return;
     }
 
-    const order = {
-      ...data,
-      status: "pending",
-      createdAt: new Date().toISOString(),
-      totalAmount: calculateTotal(data),
-    };
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "You must be logged in to submit cards for grading.",
+        });
+        return;
+      }
 
-    const existingOrders = localStorage.getItem('gradingOrders');
-    const orders = existingOrders ? JSON.parse(existingOrders) : [];
-    orders.push(order);
-    localStorage.setItem('gradingOrders', JSON.stringify(orders));
+      const orderId = `order-${Date.now()}`;
+      
+      // Get existing EAN8 codes to avoid duplicates
+      const { data: existingCodes } = await supabase
+        .from('card_gradings')
+        .select('ean8');
+      
+      const existingEAN8s = existingCodes?.map(code => code.ean8) || [];
 
-    toast({
-      title: "Comandă plasată cu succes!",
-      description: "Vă mulțumim pentru comandă. Veți primi un email de confirmare în curând.",
-    });
+      // Create card grading records
+      const cardPromises = data.cards.map(async (card) => {
+        const ean8 = generateEAN8(existingEAN8s);
+        existingEAN8s.push(ean8); // Add to local array to prevent duplicates
 
-    form.reset();
-    setCards([{ id: "1" }]);
-    setStep(1);
+        return supabase
+          .from('card_gradings')
+          .insert({
+            order_id: orderId,
+            card_name: card.name,
+            year: card.year,
+            set_name: card.set,
+            card_number: card.cardNumber || null,
+            variant: card.variant || null,
+            notes: card.notes || null,
+            ean8: ean8,
+            user_id: user.id,
+            customer_name: data.fullName,
+            customer_email: data.email,
+            customer_phone: data.phone,
+            customer_address: data.address,
+            customer_city: data.city,
+            customer_state: data.state,
+            customer_zip: data.zipCode,
+            customer_country: data.country,
+            service_type: data.serviceType,
+            shipping_method: data.shippingMethod,
+          });
+      });
+
+      const results = await Promise.all(cardPromises);
+      
+      // Check for any errors
+      const errors = results.filter(result => result.error);
+      if (errors.length > 0) {
+        console.error('Errors saving cards:', errors);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "There was an error saving some cards. Please try again.",
+        });
+        return;
+      }
+
+      toast({
+        title: "Order placed successfully!",
+        description: "You will receive a confirmation email shortly.",
+      });
+
+      form.reset();
+      setCards([{ id: "1" }]);
+      setStep(1);
+    } catch (error) {
+      console.error('Error submitting order:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "There was an error submitting your order. Please try again.",
+      });
+    }
   };
 
   const calculateTotal = (data: z.infer<typeof formSchema>) => {
