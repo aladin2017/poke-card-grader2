@@ -14,6 +14,13 @@ import { Progress } from "@/components/ui/progress";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const formSchema = z.object({
   fullName: z.string().min(2, "Numele trebuie să aibă cel puțin 2 caractere"),
@@ -26,11 +33,16 @@ const formSchema = z.object({
   country: z.string().min(2, "Țara trebuie să aibă cel puțin 2 caractere"),
   serviceType: z.enum(["standard", "medium", "priority"]),
   shippingMethod: z.enum(["standard", "express"]),
-  cards: z.array(z.object({
-    name: z.string().min(2, "Numele cardului trebuie să aibă cel puțin 2 caractere"),
-    year: z.string().min(4, "Anul trebuie să aibă 4 caractere"),
-    set: z.string().min(2, "Setul trebuie să aibă cel puțin 2 caractere")
-  })),
+  cards: z.array(
+    z.object({
+      name: z.string().min(2, "Numele cardului trebuie să aibă cel puțin 2 caractere"),
+      year: z.string().min(4, "Anul trebuie să aibă 4 caractere"),
+      set: z.string().min(2, "Setul trebuie să aibă cel puțin 2 caractere"),
+      cardNumber: z.string().optional(),
+      variant: z.string().optional(),
+      notes: z.string().optional(),
+    })
+  ),
   cardNumber: z.string().min(16, "Numărul cardului trebuie să aibă 16 caractere"),
   expiryDate: z.string().min(5, "Data expirării trebuie să fie în formatul MM/YY"),
   cvc: z.string().min(3, "CVC-ul trebuie să aibă 3 caractere")
@@ -54,7 +66,7 @@ export function NewGradingForm() {
       country: "",
       serviceType: "standard",
       shippingMethod: "standard",
-      cards: [{ name: "", year: "", set: "" }],
+      cards: [{ name: "", year: "", set: "", cardNumber: "", variant: "", notes: "" }],
       cardNumber: "",
       expiryDate: "",
       cvc: "",
@@ -64,11 +76,8 @@ export function NewGradingForm() {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       if (step < 3) {
-        const isValid = await form.trigger();
-        if (isValid) {
-          setStep(step + 1);
-          setProgress((step / 3) * 100);
-        }
+        setStep(step + 1);
+        setProgress((step / 3) * 100);
         return;
       }
 
@@ -101,7 +110,7 @@ export function NewGradingForm() {
                   <FormItem>
                     <FormLabel>Nume Complet</FormLabel>
                     <FormControl>
-                      <Input className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2" {...field} />
+                      <Input placeholder="John Doe" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -114,7 +123,7 @@ export function NewGradingForm() {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2" {...field} />
+                      <Input placeholder="john@example.com" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -127,7 +136,7 @@ export function NewGradingForm() {
                   <FormItem>
                     <FormLabel>Telefon</FormLabel>
                     <FormControl>
-                      <Input className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2" {...field} />
+                      <Input placeholder="+40 123 456 789" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -140,7 +149,59 @@ export function NewGradingForm() {
                   <FormItem>
                     <FormLabel>Adresă</FormLabel>
                     <FormControl>
-                      <Input className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2" {...field} />
+                      <Input placeholder="Strada, Nr." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="city"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Oraș</FormLabel>
+                    <FormControl>
+                      <Input placeholder="București" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="state"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Județ</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Sector/Județ" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="zipCode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Cod Poștal</FormLabel>
+                    <FormControl>
+                      <Input placeholder="123456" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="country"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Țară</FormLabel>
+                    <FormControl>
+                      <Input placeholder="România" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -153,47 +214,72 @@ export function NewGradingForm() {
         return (
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Carduri pentru Gradare</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="cards.0.name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nume Card</FormLabel>
-                    <FormControl>
-                      <Input className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="cards.0.year"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>An</FormLabel>
-                    <FormControl>
-                      <Input className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="cards.0.set"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Set</FormLabel>
-                    <FormControl>
-                      <Input className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            {form.getValues().cards.map((_, index) => (
+              <div key={index} className="grid grid-cols-2 gap-4 p-4 border rounded">
+                <FormField
+                  control={form.control}
+                  name={`cards.${index}.name`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nume Card</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Charizard" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name={`cards.${index}.year`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>An</FormLabel>
+                      <FormControl>
+                        <Input placeholder="1999" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name={`cards.${index}.set`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Set</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Base Set" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name={`cards.${index}.cardNumber`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Număr Card (opțional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="4/102" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                const currentCards = form.getValues().cards;
+                form.setValue('cards', [...currentCards, { name: '', year: '', set: '', cardNumber: '', variant: '', notes: '' }]);
+              }}
+            >
+              Adaugă alt card
+            </Button>
           </div>
         );
       case 3:
@@ -208,7 +294,7 @@ export function NewGradingForm() {
                   <FormItem>
                     <FormLabel>Număr Card</FormLabel>
                     <FormControl>
-                      <Input className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2" {...field} />
+                      <Input placeholder="4242 4242 4242 4242" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -221,7 +307,7 @@ export function NewGradingForm() {
                   <FormItem>
                     <FormLabel>Data Expirare</FormLabel>
                     <FormControl>
-                      <Input className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2" {...field} />
+                      <Input placeholder="MM/YY" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -234,7 +320,7 @@ export function NewGradingForm() {
                   <FormItem>
                     <FormLabel>CVC</FormLabel>
                     <FormControl>
-                      <Input className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2" {...field} />
+                      <Input placeholder="123" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
