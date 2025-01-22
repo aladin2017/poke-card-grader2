@@ -51,13 +51,15 @@ export function DataTable({ showAll = false }: DataTableProps) {
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['orders', showAll],
     queryFn: async () => {
-      // First check if user is admin
+      // First check if user is admin by getting their specific profile
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('role')
+        .eq('id', (await supabase.auth.getUser()).data.user?.id)
         .single();
 
       if (profileError || profileData?.role !== 'admin') {
+        console.error('Error fetching profile or user is not admin:', profileError);
         toast({
           variant: "destructive",
           title: "Error",
