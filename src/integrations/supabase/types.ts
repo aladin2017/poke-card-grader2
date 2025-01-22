@@ -161,6 +161,39 @@ export type Database = {
         }
         Relationships: []
       }
+      card_submission_orders: {
+        Row: {
+          created_at: string | null
+          id: string
+          payment_status: Database["public"]["Enums"]["payment_status"] | null
+          service_type: string
+          stripe_payment_intent_id: string | null
+          stripe_session_id: string | null
+          total_amount: number
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          payment_status?: Database["public"]["Enums"]["payment_status"] | null
+          service_type: string
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
+          total_amount: number
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          payment_status?: Database["public"]["Enums"]["payment_status"] | null
+          service_type?: string
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
+          total_amount?: number
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string | null
@@ -246,6 +279,7 @@ export type Database = {
         | "in_progress"
         | "completed"
         | "rejected"
+      payment_status: "pending" | "completed" | "failed"
       service_type: "standard" | "express" | "premium"
       shipping_method: "standard" | "express" | "international"
       user_role: "admin" | "user"

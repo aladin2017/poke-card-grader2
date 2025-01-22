@@ -17,6 +17,7 @@ import { X } from "lucide-react";
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const formSchema = z.object({
   cards: z.array(
@@ -45,6 +46,7 @@ export function CardSubmissionForm() {
   const { toast } = useToast();
   const { serviceType } = useParams();
   const [step, setStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -73,7 +75,6 @@ export function CardSubmissionForm() {
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     try {
       if (step === 1) {
-        // Validate only the cards array when on step 1
         const cardsValidation = z.object({
           cards: formSchema.shape.cards,
         });
@@ -92,12 +93,32 @@ export function CardSubmissionForm() {
         return;
       }
 
-      // If we're on step 2, we'll submit the entire form
-      console.log("Form submitted:", data);
-      toast({
-        title: "Success",
-        description: "Your submission has been received",
-      });
+      setIsSubmitting(true);
+
+      // Create Stripe checkout session
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-checkout`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+          },
+          body: JSON.stringify({
+            serviceType,
+            cards: data.cards,
+          }),
+        }
+      );
+
+      const { url, error } = await response.json();
+
+      if (error) {
+        throw new Error(error);
+      }
+
+      // Redirect to Stripe Checkout
+      window.location.href = url;
     } catch (error) {
       console.error("Form error:", error);
       toast({
@@ -105,6 +126,8 @@ export function CardSubmissionForm() {
         title: "Error",
         description: "Something went wrong. Please try again.",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -349,8 +372,12 @@ export function CardSubmissionForm() {
                 Previous
               </Button>
             )}
-            <Button type="submit" className="ml-auto">
-              {step === 1 ? "Next" : "Submit"}
+            <Button 
+              type="submit" 
+              className="ml-auto"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Processing..." : step === 1 ? "Next" : "Proceed to Payment"}
             </Button>
           </div>
         </form>
