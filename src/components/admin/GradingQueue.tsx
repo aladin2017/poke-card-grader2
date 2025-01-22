@@ -9,7 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, CheckCircle, ClipboardEdit, Image } from "lucide-react";
+import { ArrowRight, CheckCircle, Image } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import {
@@ -17,7 +17,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,7 +32,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const gradeScales = [
-  { value: "10+", label: "Pristine (10+)" },
+  { value: "10.5", label: "Pristine (10+)" },
   { value: "10", label: "Gem-Mint (10)" },
   { value: "9", label: "Mint (9)" },
   { value: "8", label: "Near Mint-Mint (8)" },
@@ -168,12 +167,12 @@ export function GradingQueue() {
       <form onSubmit={(e) => { e.preventDefault(); handleFinalizeGrading(); }} className="space-y-6">
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="centering">Centering (0-10)</Label>
+            <Label htmlFor="centering">Centering (0-10+)</Label>
             <Input
               id="centering"
               type="number"
               min="0"
-              max="10"
+              max="10.5"
               step="0.1"
               value={centering}
               onChange={(e) => setCentering(Number(e.target.value))}
@@ -181,12 +180,12 @@ export function GradingQueue() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="surfaces">Surfaces (0-10)</Label>
+            <Label htmlFor="surfaces">Surfaces (0-10+)</Label>
             <Input
               id="surfaces"
               type="number"
               min="0"
-              max="10"
+              max="10.5"
               step="0.1"
               value={surfaces}
               onChange={(e) => setSurfaces(Number(e.target.value))}
@@ -194,12 +193,12 @@ export function GradingQueue() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="edges">Edges (0-10)</Label>
+            <Label htmlFor="edges">Edges (0-10+)</Label>
             <Input
               id="edges"
               type="number"
               min="0"
-              max="10"
+              max="10.5"
               step="0.1"
               value={edges}
               onChange={(e) => setEdges(Number(e.target.value))}
@@ -207,12 +206,12 @@ export function GradingQueue() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="corners">Corners (0-10)</Label>
+            <Label htmlFor="corners">Corners (0-10+)</Label>
             <Input
               id="corners"
               type="number"
               min="0"
-              max="10"
+              max="10.5"
               step="0.1"
               value={corners}
               onChange={(e) => setCorners(Number(e.target.value))}
