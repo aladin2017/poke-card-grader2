@@ -40,6 +40,7 @@ const CustomerDashboard = () => {
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session }, error } = await supabase.auth.getSession();
+      console.log("Auth session:", session); // Log session data
       if (error || !session) {
         toast({
           variant: "destructive",
@@ -56,6 +57,7 @@ const CustomerDashboard = () => {
   // Set up authentication listener
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth state changed:", event, session); // Log auth state changes
       if (event === 'SIGNED_OUT' || !session) {
         navigate("/auth");
       }
@@ -68,10 +70,13 @@ const CustomerDashboard = () => {
     queryKey: ['customer-orders'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
+      console.log("Current user:", user); // Log current user
       
       if (!user) {
         throw new Error('Authentication required');
       }
+
+      console.log("Fetching orders for user:", user.id); // Log user ID
 
       const { data: orderData, error: queryError } = await supabase
         .from('card_gradings')
@@ -86,6 +91,8 @@ const CustomerDashboard = () => {
         `)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
+
+      console.log("Query response:", { data: orderData, error: queryError }); // Log query response
 
       if (queryError) {
         console.error('Error fetching orders:', queryError);
