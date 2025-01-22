@@ -41,7 +41,7 @@ export const CardVerification = () => {
         .single();
 
       if (error) {
-        if (error.code !== 'PGRST116') { // Not found error code
+        if (error.code !== 'PGRST116') {
           console.error('Error fetching card:', error);
           toast({
             variant: "destructive",
@@ -52,10 +52,8 @@ export const CardVerification = () => {
         return null;
       }
 
-      // Safely convert the grading_details from JSON to GradingDetails type
       const gradingDetails = data.grading_details as unknown as GradingDetails;
       
-      // Validate that the grading details have all required properties
       const isValidGradingDetails = gradingDetails && 
         typeof gradingDetails.centering === 'number' &&
         typeof gradingDetails.surfaces === 'number' &&
