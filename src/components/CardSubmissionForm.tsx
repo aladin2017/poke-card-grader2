@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import {
@@ -76,7 +76,10 @@ export function CardSubmissionForm() {
     },
   });
 
-  const { fields, append, remove } = form.watch("cards");
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "cards",
+  });
 
   const addCard = () => {
     append({ cardName: "", cardNumber: "", cardSet: "" });
@@ -139,7 +142,7 @@ export function CardSubmissionForm() {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           {fields.map((field, index) => (
-            <Card key={index}>
+            <Card key={field.id}>
               <CardContent className="pt-6">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-lg font-semibold">Card {index + 1}</h2>
