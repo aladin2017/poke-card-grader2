@@ -31,6 +31,18 @@ const getGradeColor = (grade: number) => {
   return "text-red-500";
 };
 
+const isGradingDetails = (details: any): details is GradingDetails => {
+  return (
+    details &&
+    typeof details === 'object' &&
+    'centering' in details &&
+    'surfaces' in details &&
+    'edges' in details &&
+    'corners' in details &&
+    'finalGrade' in details
+  );
+};
+
 export function GradingHistory() {
   const { toast } = useToast();
   
@@ -83,7 +95,7 @@ export function GradingHistory() {
 
       return (data || []).map(item => ({
         ...item,
-        grading_details: item.grading_details as GradingDetails
+        grading_details: isGradingDetails(item.grading_details) ? item.grading_details : null
       }));
     },
   });
