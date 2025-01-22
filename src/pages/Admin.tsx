@@ -20,8 +20,12 @@ const Admin = () => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
         
+        if (sessionError) {
+          throw sessionError;
+        }
+
         if (!currentSession?.user?.id) {
           toast({
             variant: "destructive",
@@ -32,10 +36,8 @@ const Admin = () => {
           return;
         }
 
-        // Set session first
         setSession(currentSession);
 
-        // Then check admin status
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('role')
@@ -54,7 +56,6 @@ const Admin = () => {
         }
 
         if (profileData?.role !== 'admin') {
-          console.log('User is not admin:', profileData?.role);
           toast({
             variant: "destructive",
             title: "Access Denied",
@@ -65,12 +66,12 @@ const Admin = () => {
         }
 
         setIsAdmin(true);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error in checkAuth:', error);
         toast({
           variant: "destructive",
           title: "Error",
-          description: "An error occurred while checking authentication.",
+          description: error.message || "An error occurred while checking authentication.",
         });
         navigate('/auth');
       } finally {
@@ -91,11 +92,13 @@ const Admin = () => {
       setSession(session);
       
       try {
-        const { data: profileData } = await supabase
+        const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('role')
           .eq('id', session.user.id)
           .single();
+
+        if (profileError) throw profileError;
 
         if (profileData?.role !== 'admin') {
           toast({
@@ -108,13 +111,20 @@ const Admin = () => {
         }
 
         setIsAdmin(true);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error checking admin status:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error.message || "Could not verify admin status.",
+        });
         navigate('/');
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [navigate, toast]);
 
   if (isLoading) {
