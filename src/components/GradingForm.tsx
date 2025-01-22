@@ -42,12 +42,8 @@ const formSchema = z.object({
   country: z.string().min(2, {
     message: "Țara trebuie să conțină cel puțin 2 caractere.",
   }),
-  serviceType: z.enum(["standard", "medium", "priority"], {
-    required_error: "Vă rugăm să selectați un tip de serviciu.",
-  }),
-  shippingMethod: z.enum(["standard", "express"], {
-    required_error: "Vă rugăm să selectați o metodă de livrare.",
-  }),
+  serviceType: z.enum(["standard", "medium", "priority"]),
+  shippingMethod: z.enum(["standard", "express"]),
   cards: z.array(
     z.object({
       id: z.string(),
@@ -122,12 +118,12 @@ export function GradingForm() {
     return (servicePrice * data.cards.length) + shippingPrice;
   };
 
-  const onSubmit = async (data: z.infer<typeof formSchema>) => {
+  const handleNextStep = async (data: z.infer<typeof formSchema>) => {
     if (step === 1) {
-      const requiredFields = ['fullName', 'email', 'phone', 'address', 'city', 'state', 'zipCode', 'country', 'serviceType', 'shippingMethod'];
+      const requiredFields = ['fullName', 'email', 'phone', 'address', 'city', 'state', 'zipCode', 'country'];
       const missingFields = requiredFields.filter(field => !data[field as keyof typeof data]);
       
-      if (missingFields.length > 0) {
+      if (missingFields.length > 0 || !data.serviceType || !data.shippingMethod) {
         toast({
           title: "Validation Error",
           description: "Please fill in all required fields before proceeding.",
@@ -136,10 +132,7 @@ export function GradingForm() {
         return;
       }
       setStep(2);
-      return;
-    }
-
-    if (step === 2) {
+    } else if (step === 2) {
       const isCardsValid = data.cards.every(card => 
         card.name && card.year && card.set
       );
@@ -153,31 +146,35 @@ export function GradingForm() {
         return;
       }
       setStep(3);
+    }
+  };
+
+  const onSubmit = async (data: z.infer<typeof formSchema>) => {
+    if (step < 3) {
+      await handleNextStep(data);
       return;
     }
 
-    if (step === 3) {
-      const order = {
-        ...data,
-        status: "pending",
-        createdAt: new Date().toISOString(),
-        totalAmount: calculateTotal(data),
-      };
+    const order = {
+      ...data,
+      status: "pending",
+      createdAt: new Date().toISOString(),
+      totalAmount: calculateTotal(data),
+    };
 
-      localStorage.setItem('gradingOrders', JSON.stringify([
-        ...JSON.parse(localStorage.getItem('gradingOrders') || '[]'),
-        order
-      ]));
+    localStorage.setItem('gradingOrders', JSON.stringify([
+      ...JSON.parse(localStorage.getItem('gradingOrders') || '[]'),
+      order
+    ]));
 
-      toast({
-        title: "Comandă plasată cu succes!",
-        description: "Vă mulțumim pentru comandă. Veți primi un email de confirmare în curând.",
-      });
+    toast({
+      title: "Comandă plasată cu succes!",
+      description: "Vă mulțumim pentru comandă. Veți primi un email de confirmare în curând.",
+    });
 
-      form.reset();
-      setCards([{ id: "1" }]);
-      setStep(1);
-    }
+    form.reset();
+    setCards([{ id: "1" }]);
+    setStep(1);
   };
 
   return (
