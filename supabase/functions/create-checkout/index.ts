@@ -51,6 +51,7 @@ serve(async (req) => {
       orderDisplayId
     });
 
+    // Create the session with the correct mode
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
@@ -86,6 +87,20 @@ serve(async (req) => {
 
     console.log('Payment session created:', session.id);
 
+    // Get user ID if authenticated
+    let userId = null;
+    const authHeader = req.headers.get('Authorization');
+    if (authHeader) {
+      const supabase = createClient(
+        Deno.env.get('SUPABASE_URL') || '',
+        Deno.env.get('SUPABASE_ANON_KEY') || '',
+      );
+      const { data: { user } } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
+      if (user) {
+        userId = user.id;
+      }
+    }
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') || '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '',
@@ -102,6 +117,7 @@ serve(async (req) => {
     const { data: orderData, error: orderError } = await supabase
       .from('card_submission_orders')
       .insert({
+        user_id: userId, // This can be null for anonymous users
         service_type: serviceType,
         total_amount: totalAmount,
         stripe_session_id: session.id,
@@ -115,9 +131,6 @@ serve(async (req) => {
       throw new Error('Failed to create order record');
     }
 
-    const orderId = orderData.id;
-    console.log('Order created with ID:', orderId);
-
     console.log('Creating card grading records...');
 
     for (const card of cards) {
@@ -128,10 +141,11 @@ serve(async (req) => {
           card_name: card.cardName,
           card_number: card.cardNumber,
           set_name: card.cardSet,
+          user_id: userId, // This can be null for anonymous users
           customer_name: `${shipping.firstName} ${shipping.lastName}`,
           customer_email: shipping.email,
-          customer_phone: shipping.phone,
-          customer_address: shipping.address,
+          customer_phone: `${shipping.phonePrefix}${shipping.phoneNumber}`,
+          customer_address: shipping.addressLine1,
           customer_city: shipping.city,
           customer_state: shipping.state,
           customer_zip: shipping.zipCode,
