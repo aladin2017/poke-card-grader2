@@ -46,7 +46,7 @@ const App = () => {
           <Sonner />
           <BrowserRouter>
             <Header session={session} />
-            <main className="flex-1">
+            <main className="flex-1 pt-24"> {/* Added padding-top here */}
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/submit/:serviceType" element={<CardSubmissionForm />} />
