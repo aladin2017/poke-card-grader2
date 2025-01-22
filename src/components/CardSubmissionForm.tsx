@@ -319,10 +319,13 @@ export function CardSubmissionForm() {
                                 <SelectItem 
                                   key={country.code} 
                                   value={country.prefix}
-                                  className="flex items-center gap-2"
+                                  className="flex items-center justify-between"
                                 >
-                                  <span className="text-base">{country.flag}</span>
-                                  <span className="font-mono">{country.prefix}</span>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-base">{country.flag}</span>
+                                    <span>{country.name}</span>
+                                  </div>
+                                  <span className="font-mono text-muted-foreground">{country.prefix}</span>
                                 </SelectItem>
                               ))}
                             </SelectContent>
