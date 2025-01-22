@@ -123,31 +123,64 @@ export function GradingForm() {
   };
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
-    if (step < 3) {
-      setStep(step + 1);
+    // For step 1, validate required fields before proceeding
+    if (step === 1) {
+      const requiredFields = ['fullName', 'email', 'phone', 'address', 'city', 'state', 'zipCode', 'country', 'serviceType', 'shippingMethod'];
+      const missingFields = requiredFields.filter(field => !data[field as keyof typeof data]);
+      
+      if (missingFields.length > 0) {
+        toast({
+          title: "Validation Error",
+          description: "Please fill in all required fields before proceeding.",
+          variant: "destructive",
+        });
+        return;
+      }
+      setStep(2);
       return;
     }
 
-    const order = {
-      ...data,
-      status: "pending",
-      createdAt: new Date().toISOString(),
-      totalAmount: calculateTotal(data),
-    };
+    // For step 2, validate cards before proceeding
+    if (step === 2) {
+      const isCardsValid = data.cards.every(card => 
+        card.name && card.year && card.set
+      );
 
-    localStorage.setItem('gradingOrders', JSON.stringify([
-      ...JSON.parse(localStorage.getItem('gradingOrders') || '[]'),
-      order
-    ]));
+      if (!isCardsValid) {
+        toast({
+          title: "Validation Error",
+          description: "Please fill in all required card information.",
+          variant: "destructive",
+        });
+        return;
+      }
+      setStep(3);
+      return;
+    }
 
-    toast({
-      title: "Comandă plasată cu succes!",
-      description: "Vă mulțumim pentru comandă. Veți primi un email de confirmare în curând.",
-    });
+    // For step 3 (final step), submit the form
+    if (step === 3) {
+      const order = {
+        ...data,
+        status: "pending",
+        createdAt: new Date().toISOString(),
+        totalAmount: calculateTotal(data),
+      };
 
-    form.reset();
-    setCards([{ id: "1" }]);
-    setStep(1);
+      localStorage.setItem('gradingOrders', JSON.stringify([
+        ...JSON.parse(localStorage.getItem('gradingOrders') || '[]'),
+        order
+      ]));
+
+      toast({
+        title: "Comandă plasată cu succes!",
+        description: "Vă mulțumim pentru comandă. Veți primi un email de confirmare în curând.",
+      });
+
+      form.reset();
+      setCards([{ id: "1" }]);
+      setStep(1);
+    }
   };
 
   return (
