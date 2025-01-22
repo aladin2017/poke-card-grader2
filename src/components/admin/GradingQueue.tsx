@@ -94,6 +94,13 @@ export function GradingQueue() {
     const [frontImage, setFrontImage] = useState<string>("");
     const [backImage, setBackImage] = useState<string>("");
 
+    const handleNumericInput = (value: string, setter: (value: number) => void) => {
+      const numValue = parseFloat(value);
+      if (!isNaN(numValue) && numValue >= 0 && numValue <= 10.5) {
+        setter(numValue);
+      }
+    };
+
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, side: 'front' | 'back') => {
       const file = e.target.files?.[0];
       if (file) {
@@ -167,7 +174,7 @@ export function GradingQueue() {
       <form onSubmit={(e) => { e.preventDefault(); handleFinalizeGrading(); }} className="space-y-6">
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="centering">Centering (0-10+)</Label>
+            <Label htmlFor="centering">Centering (0-10.5)</Label>
             <Input
               id="centering"
               type="number"
@@ -175,12 +182,12 @@ export function GradingQueue() {
               max="10.5"
               step="0.1"
               value={centering}
-              onChange={(e) => setCentering(Number(e.target.value))}
+              onChange={(e) => handleNumericInput(e.target.value, setCentering)}
               required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="surfaces">Surfaces (0-10+)</Label>
+            <Label htmlFor="surfaces">Surfaces (0-10.5)</Label>
             <Input
               id="surfaces"
               type="number"
@@ -188,12 +195,12 @@ export function GradingQueue() {
               max="10.5"
               step="0.1"
               value={surfaces}
-              onChange={(e) => setSurfaces(Number(e.target.value))}
+              onChange={(e) => handleNumericInput(e.target.value, setSurfaces)}
               required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="edges">Edges (0-10+)</Label>
+            <Label htmlFor="edges">Edges (0-10.5)</Label>
             <Input
               id="edges"
               type="number"
@@ -201,12 +208,12 @@ export function GradingQueue() {
               max="10.5"
               step="0.1"
               value={edges}
-              onChange={(e) => setEdges(Number(e.target.value))}
+              onChange={(e) => handleNumericInput(e.target.value, setEdges)}
               required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="corners">Corners (0-10+)</Label>
+            <Label htmlFor="corners">Corners (0-10.5)</Label>
             <Input
               id="corners"
               type="number"
@@ -214,7 +221,7 @@ export function GradingQueue() {
               max="10.5"
               step="0.1"
               value={corners}
-              onChange={(e) => setCorners(Number(e.target.value))}
+              onChange={(e) => handleNumericInput(e.target.value, setCorners)}
               required
             />
           </div>
