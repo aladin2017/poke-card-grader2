@@ -16,7 +16,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Trash2, Flag } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -26,26 +26,26 @@ import {
 } from "@/components/ui/select";
 
 const europeanCountries = [
-  { code: "RO", name: "Romania", prefix: "+40" },
-  { code: "GB", name: "United Kingdom", prefix: "+44" },
-  { code: "DE", name: "Germany", prefix: "+49" },
-  { code: "FR", name: "France", prefix: "+33" },
-  { code: "IT", name: "Italy", prefix: "+39" },
-  { code: "ES", name: "Spain", prefix: "+34" },
-  { code: "PT", name: "Portugal", prefix: "+351" },
-  { code: "NL", name: "Netherlands", prefix: "+31" },
-  { code: "BE", name: "Belgium", prefix: "+32" },
-  { code: "GR", name: "Greece", prefix: "+30" },
-  { code: "SE", name: "Sweden", prefix: "+46" },
-  { code: "DK", name: "Denmark", prefix: "+45" },
-  { code: "FI", name: "Finland", prefix: "+358" },
-  { code: "IE", name: "Ireland", prefix: "+353" },
-  { code: "AT", name: "Austria", prefix: "+43" },
-  { code: "PL", name: "Poland", prefix: "+48" },
-  { code: "HU", name: "Hungary", prefix: "+36" },
-  { code: "CZ", name: "Czech Republic", prefix: "+420" },
-  { code: "SK", name: "Slovakia", prefix: "+421" },
-  { code: "BG", name: "Bulgaria", prefix: "+359" },
+  { code: "RO", name: "Romania", prefix: "+40", flag: "🇷🇴" },
+  { code: "GB", name: "United Kingdom", prefix: "+44", flag: "🇬🇧" },
+  { code: "DE", name: "Germany", prefix: "+49", flag: "🇩🇪" },
+  { code: "FR", name: "France", prefix: "+33", flag: "🇫🇷" },
+  { code: "IT", name: "Italy", prefix: "+39", flag: "🇮🇹" },
+  { code: "ES", name: "Spain", prefix: "+34", flag: "🇪🇸" },
+  { code: "PT", name: "Portugal", prefix: "+351", flag: "🇵🇹" },
+  { code: "NL", name: "Netherlands", prefix: "+31", flag: "🇳🇱" },
+  { code: "BE", name: "Belgium", prefix: "+32", flag: "🇧🇪" },
+  { code: "GR", name: "Greece", prefix: "+30", flag: "🇬🇷" },
+  { code: "SE", name: "Sweden", prefix: "+46", flag: "🇸🇪" },
+  { code: "DK", name: "Denmark", prefix: "+45", flag: "🇩🇰" },
+  { code: "FI", name: "Finland", prefix: "+358", flag: "🇫🇮" },
+  { code: "IE", name: "Ireland", prefix: "+353", flag: "🇮🇪" },
+  { code: "AT", name: "Austria", prefix: "+43", flag: "🇦🇹" },
+  { code: "PL", name: "Poland", prefix: "+48", flag: "🇵🇱" },
+  { code: "HU", name: "Hungary", prefix: "+36", flag: "🇭🇺" },
+  { code: "CZ", name: "Czech Republic", prefix: "+420", flag: "🇨🇿" },
+  { code: "SK", name: "Slovakia", prefix: "+421", flag: "🇸🇰" },
+  { code: "BG", name: "Bulgaria", prefix: "+359", flag: "🇧🇬" },
 ];
 
 const cardSchema = z.object({
@@ -118,7 +118,6 @@ export function CardSubmissionForm() {
     name: "cards",
   });
 
-  // Watch for country changes
   const selectedCountry = form.watch("shipping.country");
   
   useEffect(() => {
@@ -322,7 +321,7 @@ export function CardSubmissionForm() {
                                   value={country.prefix}
                                   className="flex items-center gap-2"
                                 >
-                                  <Flag className="h-4 w-4" />
+                                  <span className="text-base">{country.flag}</span>
                                   <span className="font-mono">{country.prefix}</span>
                                 </SelectItem>
                               ))}
