@@ -1,10 +1,12 @@
 export type GradeStatus = 'pending' | 'in_progress' | 'completed';
+export type Priority = 'high' | 'normal' | 'low';
+export type QueueStatus = 'queued' | 'in_progress' | 'completed';
 
 export interface GradeDetails {
   centering: number;
   corners: number;
   edges: number;
-  surface: number;
+  surfaces: number;
   finalGrade: number;
   notes?: string;
   frontImage?: string;
@@ -25,6 +27,26 @@ export interface GradeCard {
   orderId: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface QueueItem {
+  id: string;
+  cardName: string;
+  condition: string;
+  customer: string;
+  priority: Priority;
+  status: QueueStatus;
+  ean8: string;
+  orderId: string;
+  gradingDetails?: {
+    centering: number;
+    surfaces: number;
+    edges: number;
+    corners: number;
+    finalGrade: number;
+    frontImage?: string;
+    backImage?: string;
+  };
 }
 
 export interface GradeQueue {
