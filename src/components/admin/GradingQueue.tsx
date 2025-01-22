@@ -53,11 +53,7 @@ const getGradeColor = (grade: number) => {
   return "text-red-500";
 };
 
-interface GradingQueueProps {
-  session: any;
-}
-
-export function GradingQueue({ session }: GradingQueueProps) {
+export function GradingQueue({ session }: { session: any }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -161,7 +157,7 @@ export function GradingQueue({ session }: GradingQueueProps) {
           status: 'queued',
           graded_by: session.user.id 
         })
-        .eq('order_id', item.order_id);
+        .eq('id', item.id); // Changed from order_id to id to handle individual cards
 
       if (error) throw error;
 
@@ -203,7 +199,7 @@ export function GradingQueue({ session }: GradingQueueProps) {
         try {
           const { data, error } = await supabase.storage
             .from('card-images')
-            .upload(`${item.order_id}/${side}`, file);
+            .upload(`${item.id}/${side}`, file);
 
           if (error) throw error;
 
@@ -243,9 +239,9 @@ export function GradingQueue({ session }: GradingQueueProps) {
             back_image_url: backImage,
             status: 'completed',
             graded_at: new Date().toISOString(),
-            graded_by: (await supabase.auth.getUser()).data.user?.id
+            graded_by: session.user.id
           })
-          .eq('order_id', item.order_id);
+          .eq('id', item.id); // Changed from order_id to id to handle individual cards
 
         if (error) throw error;
 
