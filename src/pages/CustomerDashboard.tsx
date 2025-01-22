@@ -97,15 +97,17 @@ const CustomerDashboard = () => {
         grading_details: order.grading_details as unknown as GradingDetails | null
       })) as Order[];
     },
-    enabled: true, // The query will only run after authentication check
-    retry: 1, // Only retry once if there's an error
-    onError: (err) => {
-      console.error('Query error:', err);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load your orders. Please try again later.",
-      });
+    enabled: true,
+    retry: 1,
+    meta: {
+      onError: (err: Error) => {
+        console.error('Query error:', err);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load your orders. Please try again later.",
+        });
+      }
     }
   });
 
