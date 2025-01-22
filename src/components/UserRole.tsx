@@ -11,7 +11,7 @@ export function UserRole() {
     async function getUserRole() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        console.log("Current user:", user);
+        console.log("Auth status:", user ? "Logged in" : "Not logged in");
         
         if (user) {
           const { data: profile, error } = await supabase
@@ -20,15 +20,15 @@ export function UserRole() {
             .eq('id', user.id)
             .single();
           
-          console.log("Profile data:", profile);
-          console.log("Profile error:", error);
-          
-          if (profile) {
+          if (error) {
+            console.log("Error fetching profile:", error.message);
+          } else if (profile) {
+            console.log("User role:", profile.role);
             setRole(profile.role);
           }
         }
       } catch (error) {
-        console.error("Error fetching role:", error);
+        console.error("Error:", error);
       } finally {
         setLoading(false);
       }
