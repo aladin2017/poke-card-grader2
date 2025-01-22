@@ -60,13 +60,15 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get user from auth header
+    // Try to get user if they are authenticated
+    let userId = null;
     const authHeader = req.headers.get('Authorization');
-    const token = authHeader?.replace('Bearer ', '');
-    const { data: { user } } = await supabase.auth.getUser(token);
-
-    if (!user) {
-      throw new Error('User not authenticated');
+    if (authHeader) {
+      const token = authHeader.replace('Bearer ', '');
+      const { data: { user } } = await supabase.auth.getUser(token);
+      if (user) {
+        userId = user.id;
+      }
     }
 
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
@@ -101,7 +103,7 @@ serve(async (req) => {
       cancel_url: `${req.headers.get('origin')}/submit/${serviceType}`,
       metadata: {
         order_id: orderId,
-        user_id: user.id
+        user_id: userId
       }
     });
 
@@ -110,7 +112,7 @@ serve(async (req) => {
       .from('card_submission_orders')
       .insert({
         id: orderId,
-        user_id: user.id,
+        user_id: userId,
         service_type: serviceType,
         total_amount: totalAmount,
         stripe_session_id: session.id
@@ -134,7 +136,7 @@ serve(async (req) => {
           set_name: card.cardSet,
           language: card.language,
           ean8: ean8,
-          user_id: user.id,
+          user_id: userId,
           customer_name: shipping.firstName + ' ' + shipping.lastName,
           customer_email: shipping.email,
           customer_phone: shipping.phonePrefix + shipping.phoneNumber,
