@@ -15,6 +15,11 @@ serve(async (req) => {
   try {
     const { serviceType, cards, shipping, quantity, totalAmount } = await req.json();
     
+    if (!serviceType || !cards || !shipping || !quantity || !totalAmount) {
+      console.error('Missing required fields:', { serviceType, cards, shipping, quantity, totalAmount });
+      throw new Error('Missing required fields');
+    }
+
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
       apiVersion: '2023-10-16',
     });
@@ -66,7 +71,7 @@ serve(async (req) => {
       throw new Error("No checkout URL returned from Stripe");
     }
 
-    // Initialize Supabase client
+    // Initialize Supabase client with service role key
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') || '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '',
@@ -77,6 +82,8 @@ serve(async (req) => {
         }
       }
     );
+
+    console.log('Creating order record...');
 
     // Create the order record
     const { error: orderError } = await supabase
@@ -138,7 +145,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error('Error creating payment session:', error);
+    console.error('Error in create-checkout function:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
