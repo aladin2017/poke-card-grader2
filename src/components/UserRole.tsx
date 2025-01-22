@@ -18,14 +18,17 @@ export function UserRole() {
             .from('profiles')
             .select('role')
             .eq('id', user.id)
-            .single();
+            .maybeSingle();
           
           if (error) {
-            console.log("Error fetching profile:", error.message);
-          } else if (profile) {
-            console.log("User role:", profile.role);
-            setRole(profile.role);
+            console.error("Error fetching profile:", error.message);
+          } else {
+            console.log("Profile data:", profile);
+            setRole(profile?.role || null);
           }
+        } else {
+          console.log("No user found");
+          setRole(null);
         }
       } catch (error) {
         console.error("Error:", error);
@@ -38,7 +41,7 @@ export function UserRole() {
   }, []);
 
   if (loading) {
-    return <div className="text-sm text-gray-500">Loading role...</div>;
+    return <div className="animate-pulse bg-gray-100 rounded-lg p-3 m-4">Loading role...</div>;
   }
 
   if (!role) return null;
