@@ -158,11 +158,6 @@ export function CardSubmissionForm() {
     try {
       setIsSubmitting(true);
 
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error("You must be logged in to submit cards");
-      }
-
       const response = await supabase.functions.invoke('create-checkout', {
         body: {
           serviceType,
