@@ -16,7 +16,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Flag } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -322,8 +322,8 @@ export function CardSubmissionForm() {
                                   value={country.prefix}
                                   className="flex items-center gap-2"
                                 >
+                                  <Flag className="h-4 w-4" />
                                   <span className="font-mono">{country.prefix}</span>
-                                  <span className="text-muted-foreground">({country.name})</span>
                                 </SelectItem>
                               ))}
                             </SelectContent>
