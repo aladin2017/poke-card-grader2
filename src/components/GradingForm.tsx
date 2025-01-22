@@ -265,7 +265,7 @@ export function GradingForm() {
 
   const calculateTotal = (data: z.infer<typeof formSchema>) => {
     const servicePrice = {
-      standard: 15,
+      standard: 12,
       express: 25,
       premium: 35,
     }[data.serviceType];
@@ -273,6 +273,7 @@ export function GradingForm() {
     const shippingPrice = {
       standard: 10,
       express: 25,
+      international: 35,
     }[data.shippingMethod];
 
     return (servicePrice * data.cards.length) + shippingPrice;
@@ -421,7 +422,7 @@ export function GradingForm() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="standard">Standard ($15/card)</SelectItem>
+                        <SelectItem value="standard">Standard ($12/card)</SelectItem>
                         <SelectItem value="express">Express ($25/card)</SelectItem>
                         <SelectItem value="premium">Premium ($35/card)</SelectItem>
                       </SelectContent>
@@ -446,6 +447,7 @@ export function GradingForm() {
                       <SelectContent>
                         <SelectItem value="standard">Standard ($10)</SelectItem>
                         <SelectItem value="express">Express ($25)</SelectItem>
+                        <SelectItem value="international">International ($35)</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -588,11 +590,11 @@ export function GradingForm() {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span>Service ({fields.length} cards)</span>
-                    <span>${fields.length * (form.getValues("serviceType") === "standard" ? 15 : form.getValues("serviceType") === "express" ? 25 : 35)}</span>
+                    <span>${fields.length * (form.getValues("serviceType") === "standard" ? 12 : form.getValues("serviceType") === "express" ? 25 : 35)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Shipping ({form.getValues("shippingMethod")})</span>
-                    <span>${form.getValues("shippingMethod") === "standard" ? 10 : 25}</span>
+                    <span>${form.getValues("shippingMethod") === "standard" ? 10 : form.getValues("shippingMethod") === "express" ? 25 : 35}</span>
                   </div>
                   <div className="border-t pt-2 mt-2">
                     <div className="flex justify-between font-semibold">
