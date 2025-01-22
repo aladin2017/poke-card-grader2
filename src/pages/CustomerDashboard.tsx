@@ -30,6 +30,7 @@ interface Order {
   status: string;
   created_at: string;
   grading_details: GradingDetails | null;
+  ean8: string;
 }
 
 const CustomerDashboard = () => {
@@ -70,13 +71,10 @@ const CustomerDashboard = () => {
     queryKey: ['customer-orders'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      console.log("Current user:", user); // Log current user
       
       if (!user) {
         throw new Error('Authentication required');
       }
-
-      console.log("Fetching orders for user:", user.id); // Log user ID
 
       const { data: orderData, error: queryError } = await supabase
         .from('card_gradings')
@@ -87,12 +85,11 @@ const CustomerDashboard = () => {
           service_type,
           status,
           created_at,
-          grading_details
+          grading_details,
+          ean8
         `)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
-
-      console.log("Query response:", { data: orderData, error: queryError }); // Log query response
 
       if (queryError) {
         console.error('Error fetching orders:', queryError);
@@ -176,6 +173,7 @@ const CustomerDashboard = () => {
                   <TableHead>Status</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Grade</TableHead>
+                  <TableHead>Certificate Number</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -201,6 +199,13 @@ const CustomerDashboard = () => {
                             Corners: {order.grading_details.corners}
                           </p>
                         </div>
+                      ) : (
+                        '-'
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {order.status === 'completed' ? (
+                        <span className="font-mono">{order.ean8}</span>
                       ) : (
                         '-'
                       )}
