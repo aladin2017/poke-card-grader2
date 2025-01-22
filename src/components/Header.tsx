@@ -65,15 +65,18 @@ export const Header = () => {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
+      // Clear local state
       setSession(null);
       setUserRole(null);
       
+      // Show success message
       toast({
         title: "Signed out successfully",
         duration: 2000,
       });
       
-      navigate('/auth');
+      // Force navigation to auth page
+      window.location.href = '/auth';
     } catch (error: any) {
       console.error('Error signing out:', error.message);
       toast({
