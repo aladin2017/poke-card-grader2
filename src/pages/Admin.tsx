@@ -60,7 +60,7 @@ const Admin = () => {
         </TabsContent>
 
         <TabsContent value="queue">
-          <GradingQueue />
+          <GradingQueue session={session} />
         </TabsContent>
 
         <TabsContent value="history">

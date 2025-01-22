@@ -52,15 +52,45 @@ const getGradeColor = (grade: number) => {
   return "text-red-500";
 };
 
-export function GradingQueue() {
+interface GradingQueueProps {
+  session: any;
+}
+
+export function GradingQueue({ session }: GradingQueueProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isGradingDialogOpen, setIsGradingDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   
   const { data: queueItems = [], isLoading } = useQuery({
-    queryKey: ['grading-queue'],
+    queryKey: ['grading-queue', session?.user?.id],
     queryFn: async () => {
+      if (!session?.user?.id) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "You must be logged in to view the grading queue.",
+        });
+        return [];
+      }
+
+      // First check if user is admin
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
+
+      if (profileError || profileData?.role !== 'admin') {
+        console.error('Error fetching profile or user is not admin:', profileError);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "You don't have permission to view the grading queue.",
+        });
+        return [];
+      }
+
       const { data, error } = await supabase
         .from('card_gradings')
         .select('*')
@@ -78,6 +108,7 @@ export function GradingQueue() {
 
       return data || [];
     },
+    enabled: !!session?.user?.id,
   });
 
   const handleStartGrading = (item: any) => {
