@@ -10,6 +10,7 @@ import { Footer } from "./components/Footer";
 import Index from "./pages/Index";
 import Admin from "./pages/Admin";
 import Auth from "./pages/Auth";
+import Success from "./pages/Success";
 import { CardSubmissionForm } from "./components/CardSubmissionForm";
 
 const queryClient = new QueryClient();
@@ -49,6 +50,7 @@ const App = () => {
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/submit/:serviceType" element={<CardSubmissionForm />} />
+                <Route path="/success" element={<Success />} />
                 <Route
                   path="/admin"
                   element={

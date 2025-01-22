@@ -19,8 +19,10 @@ serve(async (req) => {
       apiVersion: '2023-10-16',
     });
 
-    // Generate a unique order ID
-    const orderId = `order-${Date.now()}`;
+    // Generate a unique order ID with timestamp and random string
+    const timestamp = new Date().getTime();
+    const randomStr = Math.random().toString(36).substring(2, 8);
+    const orderId = `ORD-${timestamp}-${randomStr}`;
 
     console.log('Creating payment session...', {
       serviceType,
@@ -49,10 +51,12 @@ serve(async (req) => {
       shipping_address_collection: {
         allowed_countries: ['US', 'CA', 'GB', 'DE', 'FR', 'ES', 'IT', 'RO'],
       },
-      success_url: `${req.headers.get('origin')}/success`,
+      success_url: `${req.headers.get('origin')}/success?order_id=${orderId}`,
       cancel_url: `${req.headers.get('origin')}/submit/${serviceType}`,
       metadata: {
-        order_id: orderId
+        order_id: orderId,
+        service_type: serviceType,
+        quantity: quantity.toString(),
       }
     });
 
@@ -60,6 +64,25 @@ serve(async (req) => {
 
     if (!session.url) {
       throw new Error("No checkout URL returned from Stripe");
+    }
+
+    // Create the order in the database
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') || '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
+    );
+
+    const { error: orderError } = await supabase
+      .from('card_submission_orders')
+      .insert({
+        service_type: serviceType,
+        total_amount: totalAmount,
+        stripe_session_id: session.id,
+      });
+
+    if (orderError) {
+      console.error('Error creating order:', orderError);
+      throw orderError;
     }
 
     return new Response(
