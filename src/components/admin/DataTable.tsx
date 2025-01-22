@@ -38,6 +38,10 @@ interface DataTableProps {
   showAll?: boolean;
 }
 
+const isValidStatus = (status: string): status is Order['status'] => {
+  return ['pending', 'queued', 'completed', 'rejected'].includes(status);
+};
+
 export function DataTable({ showAll = false }: DataTableProps) {
   const { toast } = useToast();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -69,7 +73,17 @@ export function DataTable({ showAll = false }: DataTableProps) {
         throw error;
       }
 
-      return data || [];
+      return (data || []).map(item => ({
+        id: item.id,
+        order_id: item.order_id,
+        customer_name: item.customer_name,
+        customer_email: item.customer_email,
+        card_name: item.card_name,
+        status: isValidStatus(item.status) ? item.status : 'pending',
+        created_at: item.created_at,
+        service_type: item.service_type,
+        shipping_method: item.shipping_method,
+      })) as Order[];
     },
   });
 
