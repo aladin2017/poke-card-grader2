@@ -4,13 +4,13 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 interface GradingStats {
-  total_orders: string;  // Changed from number to string to handle bigint
-  pending_orders: string;
-  completed_orders: string;
-  rejected_orders: string;
+  total_orders: number;
+  pending_orders: number;
+  completed_orders: number;
+  rejected_orders: number;
   avg_completion_time: string | null;
-  total_revenue: number;  // This stays as number since it's numeric in DB
-  orders_this_month: string;
+  total_revenue: number;
+  orders_this_month: number;
 }
 
 export function StatsCards() {
@@ -35,7 +35,6 @@ export function StatsCards() {
 
   const formatCompletionTime = (timeStr: string | null) => {
     if (!timeStr) return 'N/A';
-    // Parse the interval string and return a human-readable format
     const match = timeStr.match(/(\d+):(\d+):(\d+)/);
     if (!match) return timeStr;
     const [_, hours, minutes] = match;
