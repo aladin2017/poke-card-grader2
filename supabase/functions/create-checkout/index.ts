@@ -42,13 +42,13 @@ serve(async (req) => {
 
     const timestamp = new Date().getTime();
     const randomStr = Math.random().toString(36).substring(2, 8);
-    const orderId = `ORD-${timestamp}-${randomStr}`;
+    const orderDisplayId = `ORD-${timestamp}-${randomStr}`;
 
     console.log('Creating payment session...', {
       serviceType,
       quantity,
       totalAmount,
-      orderId
+      orderDisplayId
     });
 
     const session = await stripe.checkout.sessions.create({
@@ -71,10 +71,10 @@ serve(async (req) => {
       shipping_address_collection: {
         allowed_countries: ['US', 'CA', 'GB', 'DE', 'FR', 'ES', 'IT', 'RO'],
       },
-      success_url: `${req.headers.get('origin')}/success?order_id=${orderId}`,
+      success_url: `${req.headers.get('origin')}/success?order_id=${orderDisplayId}`,
       cancel_url: `${req.headers.get('origin')}/submit/${serviceType}`,
       metadata: {
-        order_id: orderId,
+        order_display_id: orderDisplayId,
         service_type: serviceType,
         quantity: quantity.toString(),
       }
@@ -99,20 +99,24 @@ serve(async (req) => {
 
     console.log('Creating order record...');
 
-    const { error: orderError } = await supabase
+    const { data: orderData, error: orderError } = await supabase
       .from('card_submission_orders')
       .insert({
-        id: orderId,
         service_type: serviceType,
         total_amount: totalAmount,
         stripe_session_id: session.id,
         payment_status: 'pending'
-      });
+      })
+      .select()
+      .single();
 
     if (orderError) {
       console.error('Error creating order:', orderError);
       throw new Error('Failed to create order record');
     }
+
+    const orderId = orderData.id;
+    console.log('Order created with ID:', orderId);
 
     console.log('Creating card grading records...');
 
@@ -120,7 +124,7 @@ serve(async (req) => {
       const { error: gradingError } = await supabase
         .from('card_gradings')
         .insert({
-          order_id: orderId,
+          order_id: orderDisplayId,
           card_name: card.cardName,
           card_number: card.cardNumber,
           set_name: card.cardSet,
@@ -150,7 +154,7 @@ serve(async (req) => {
       JSON.stringify({ 
         url: session.url,
         sessionId: session.id,
-        orderId: orderId 
+        orderId: orderDisplayId 
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
