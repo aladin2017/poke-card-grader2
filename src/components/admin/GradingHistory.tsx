@@ -12,6 +12,8 @@ import { format } from "date-fns";
 import { Database } from "@/integrations/supabase/types";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 type OrderStatus = Database["public"]["Enums"]["order_status"];
 
@@ -35,11 +37,22 @@ export function GradingHistory() {
   const { data: historyItems = [], isLoading } = useQuery({
     queryKey: ['grading-history'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "You must be logged in to view grading history.",
+        });
+        return [];
+      }
+
       // First check if user is admin
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('role')
-        .eq('id', (await supabase.auth.getUser()).data.user?.id)
+        .eq('id', user.id)
         .single();
 
       if (profileError || profileData?.role !== 'admin') {
