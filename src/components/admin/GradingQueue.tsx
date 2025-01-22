@@ -108,10 +108,23 @@ export function GradingQueue() {
     try {
       const { error } = await supabase
         .from('card_gradings')
-        .update({ status: 'completed' })
+        .update({ 
+          status: 'completed',
+          graded_at: new Date().toISOString()
+        })
         .eq('order_id', orderId);
 
       if (error) throw error;
+
+      const { error: historyError } = await supabase
+        .from('card_grading_history')
+        .insert({
+          card_grading_id: orderId,
+          status: 'completed',
+          notes: 'Grading completed'
+        });
+
+      if (historyError) throw historyError;
 
       toast({
         title: "Grading Completed",
@@ -143,11 +156,22 @@ export function GradingQueue() {
           },
           front_image_url: gradingDetails.frontImage,
           back_image_url: gradingDetails.backImage,
-          status: 'completed'
+          status: 'completed',
+          graded_at: new Date().toISOString()
         })
         .eq('order_id', orderId);
 
       if (error) throw error;
+
+      const { error: historyError } = await supabase
+        .from('card_grading_history')
+        .insert({
+          card_grading_id: orderId,
+          status: 'completed',
+          notes: `Final grade: ${gradingDetails.finalGrade}`
+        });
+
+      if (historyError) throw historyError;
 
       toast({
         title: "Grading Details Saved",
@@ -194,7 +218,6 @@ export function GradingQueue() {
             setBackImage(publicUrl);
           }
 
-          // Update the card_gradings table with the image URL
           const { error: updateError } = await supabase
             .from('card_gradings')
             .update({
