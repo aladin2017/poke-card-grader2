@@ -245,6 +245,34 @@ export function GradingForm() {
         return;
       }
 
+      // Send order confirmation email
+      const { error: emailError } = await supabase.functions.invoke('send-auth-email', {
+        body: {
+          email: data.email,
+          type: 'order_confirmation',
+          orderDetails: {
+            orderId,
+            items: data.cards.map(card => ({
+              cardName: card.name,
+              serviceType: data.serviceType,
+              price: data.serviceType === 'standard' ? 12 : 
+                     data.serviceType === 'express' ? 25 : 35
+            })),
+            totalAmount: calculateTotal(data),
+            shippingAddress: {
+              name: data.fullName,
+              address: data.address,
+              city: data.city,
+              country: data.country
+            }
+          }
+        }
+      });
+
+      if (emailError) {
+        console.error('Error sending order confirmation email:', emailError);
+      }
+
       toast({
         title: "Order placed successfully!",
         description: "You will receive a confirmation email shortly.",

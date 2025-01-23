@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 const Auth = () => {
   const [loading, setLoading] = useState(false);
@@ -19,11 +19,24 @@ const Auth = () => {
 
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
+        const { error: signUpError } = await supabase.auth.signUp({
           email,
           password,
         });
-        if (error) throw error;
+        if (signUpError) throw signUpError;
+
+        // Send welcome email
+        const { error: emailError } = await supabase.functions.invoke('send-auth-email', {
+          body: {
+            email,
+            type: 'signup'
+          }
+        });
+        
+        if (emailError) {
+          console.error('Error sending welcome email:', emailError);
+        }
+
         toast({
           title: "Success!",
           description: "Please check your email to verify your account.",
@@ -44,6 +57,45 @@ const Auth = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePasswordReset = async () => {
+    if (!email) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please enter your email address.",
+      });
+      return;
+    }
+
+    try {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email);
+      if (resetError) throw resetError;
+
+      // Send password reset email
+      const { error: emailError } = await supabase.functions.invoke('send-auth-email', {
+        body: {
+          email,
+          type: 'reset'
+        }
+      });
+      
+      if (emailError) {
+        console.error('Error sending password reset email:', emailError);
+      }
+
+      toast({
+        title: "Password reset email sent",
+        description: "Please check your email for the password reset link.",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
     }
   };
 
@@ -81,7 +133,7 @@ const Auth = () => {
           </Button>
         </form>
 
-        <div className="text-center">
+        <div className="text-center space-y-4">
           <button
             type="button"
             onClick={() => setIsSignUp(!isSignUp)}
@@ -89,6 +141,17 @@ const Auth = () => {
           >
             {isSignUp ? "Already have an account? Sign in" : "Need an account? Sign up"}
           </button>
+          {!isSignUp && (
+            <div>
+              <button
+                type="button"
+                onClick={handlePasswordReset}
+                className="text-sm text-gray-600 hover:underline"
+              >
+                Forgot your password?
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
