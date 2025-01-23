@@ -405,11 +405,7 @@ const handler = async (req: Request): Promise<Response> => {
         to: [email],
         subject,
         html,
-        reply_to: "support@abc-grading.com",
-        headers: {
-          "List-Unsubscribe": "<mailto:unsubscribe@abc-grading.com>",
-          "Precedence": "Bulk"
-        }
+        reply_to: "support@abc-grading.com"
       }),
     });
 
