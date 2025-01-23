@@ -5,6 +5,7 @@ import { FAQ } from "@/components/FAQ";
 import { CardVerification } from "@/components/CardVerification";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const { toast } = useToast();
@@ -12,39 +13,24 @@ const Index = () => {
   const handleTestEmails = async () => {
     try {
       // Test signup email
-      await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-auth-email`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({
+      await supabase.functions.invoke('send-auth-email', {
+        body: {
           email: 'aladin_2016@yahoo.com',
           type: 'signup'
-        })
+        }
       });
 
       // Test password reset email
-      await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-auth-email`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({
+      await supabase.functions.invoke('send-auth-email', {
+        body: {
           email: 'aladin_2016@yahoo.com',
           type: 'reset'
-        })
+        }
       });
 
       // Test order confirmation email with sample data
-      await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-auth-email`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({
+      await supabase.functions.invoke('send-auth-email', {
+        body: {
           email: 'aladin_2016@yahoo.com',
           type: 'order_confirmation',
           orderDetails: {
@@ -69,7 +55,7 @@ const Index = () => {
               country: 'Romania'
             }
           }
-        })
+        }
       });
 
       toast({
