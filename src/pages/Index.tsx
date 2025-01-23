@@ -14,6 +14,11 @@ const Index = () => {
 
   const handleTestEmails = async () => {
     try {
+      toast({
+        title: "Sending test emails...",
+        description: "Please wait while we send the test emails.",
+      });
+
       // Test signup email
       await supabase.functions.invoke('send-auth-email', {
         body: {
@@ -21,9 +26,10 @@ const Index = () => {
           type: 'signup'
         }
       });
+      console.log("Signup email sent");
 
-      // Wait 1 second before sending next email
-      await delay(1000);
+      // Wait 2 seconds before sending next email
+      await delay(2000);
 
       // Test password reset email
       await supabase.functions.invoke('send-auth-email', {
@@ -32,9 +38,10 @@ const Index = () => {
           type: 'reset'
         }
       });
+      console.log("Reset email sent");
 
-      // Wait 1 second before sending next email
-      await delay(1000);
+      // Wait 2 seconds before sending next email
+      await delay(2000);
 
       // Test order confirmation email with sample data
       await supabase.functions.invoke('send-auth-email', {
@@ -65,10 +72,11 @@ const Index = () => {
           }
         }
       });
+      console.log("Order confirmation email sent");
 
       toast({
         title: "Test emails sent!",
-        description: "Please check aladin_2016@yahoo.com for all test emails.",
+        description: "Please check aladin_2016@yahoo.com for all test emails. Note: They might be in your spam folder.",
       });
     } catch (error) {
       console.error('Error sending test emails:', error);

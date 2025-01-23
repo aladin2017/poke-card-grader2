@@ -389,7 +389,7 @@ const handler = async (req: Request): Promise<Response> => {
         throw new Error("Invalid email type");
     }
 
-    console.log("Attempting to send email via Resend...");
+    console.log(`Attempting to send ${type} email via Resend...`);
     
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -398,21 +398,26 @@ const handler = async (req: Request): Promise<Response> => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "ABC Grading <no-reply@abc-grading.com>",
+        from: "ABC Grading <noreply@abc-grading.com>",
         to: [email],
         subject,
         html,
+        reply_to: "support@abc-grading.com",
+        headers: {
+          "List-Unsubscribe": "<mailto:unsubscribe@abc-grading.com>",
+          "Precedence": "Bulk"
+        }
       }),
     });
 
     const responseData = await res.text();
-    console.log("Resend API Response:", responseData);
+    console.log(`Resend API Response for ${type} email:`, responseData);
 
     if (!res.ok) {
-      throw new Error(`Failed to send email: ${responseData}`);
+      throw new Error(`Failed to send ${type} email: ${responseData}`);
     }
 
-    console.log("Email sent successfully!");
+    console.log(`${type} email sent successfully!`);
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
