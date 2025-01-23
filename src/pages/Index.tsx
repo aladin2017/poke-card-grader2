@@ -14,7 +14,7 @@ const Index = () => {
     try {
       const { error } = await supabase.functions.invoke('send-auth-email', {
         body: {
-          email: "contact@abc-grading.com", // Înlocuiește cu adresa ta de email
+          email: "aladin_2016@yahoo.com",
           type: "test",
         }
       });
