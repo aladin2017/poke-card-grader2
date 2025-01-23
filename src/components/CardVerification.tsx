@@ -44,17 +44,19 @@ export const CardVerification = ({ initialEan8 }: CardVerificationProps) => {
         .from('card_gradings')
         .select('*')
         .eq('ean8', ean8)
-        .single();
+        .maybeSingle();
 
       if (error) {
-        if (error.code !== 'PGRST116') {
-          console.error('Error fetching card:', error);
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: "A apărut o eroare la căutarea cardului. Vă rugăm să încercați din nou.",
-          });
-        }
+        console.error('Error fetching card:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "A apărut o eroare la căutarea cardului. Vă rugăm să încercați din nou.",
+        });
+        return null;
+      }
+
+      if (!data) {
         return null;
       }
 
