@@ -22,6 +22,9 @@ const Auth = () => {
         const { error: signUpError } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth/callback`
+          }
         });
         if (signUpError) throw signUpError;
 
@@ -71,7 +74,9 @@ const Auth = () => {
     }
 
     try {
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email);
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/callback`
+      });
       if (resetError) throw resetError;
 
       // Send password reset email
