@@ -1,9 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,77 +10,9 @@ const corsHeaders = {
 
 interface EmailRequest {
   email: string;
-  type: "signup" | "reset";
+  type: "signup" | "reset" | "test";
   token?: string;
 }
-
-const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
-
-const getSignupEmailTemplate = (confirmLink: string) => `
-<!DOCTYPE html>
-<html>
-<head>
-  <style>
-    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .button { 
-      background-color: #7c3aed; 
-      color: white; 
-      padding: 12px 24px; 
-      text-decoration: none;
-      border-radius: 4px;
-      display: inline-block;
-      margin: 20px 0;
-    }
-    .footer { margin-top: 40px; font-size: 0.9em; color: #666; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>Bine ai venit la ABC Grading!</h1>
-    <p>Suntem bucuroși să te avem alături de noi. Pentru a-ți activa contul, te rugăm să confirmi adresa de email:</p>
-    <a href="${confirmLink}" class="button">Confirmă Email-ul</a>
-    <p>Dacă nu tu ai creat acest cont, poți ignora acest email.</p>
-    <div class="footer">
-      <p>Cu stimă,<br>Echipa ABC Grading</p>
-    </div>
-  </div>
-</body>
-</html>
-`;
-
-const getResetPasswordEmailTemplate = (resetLink: string) => `
-<!DOCTYPE html>
-<html>
-<head>
-  <style>
-    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .button { 
-      background-color: #7c3aed; 
-      color: white; 
-      padding: 12px 24px; 
-      text-decoration: none;
-      border-radius: 4px;
-      display: inline-block;
-      margin: 20px 0;
-    }
-    .footer { margin-top: 40px; font-size: 0.9em; color: #666; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>Resetare Parolă ABC Grading</h1>
-    <p>Ai solicitat resetarea parolei tale. Click pe butonul de mai jos pentru a seta o nouă parolă:</p>
-    <a href="${resetLink}" class="button">Resetează Parola</a>
-    <p>Dacă nu tu ai solicitat resetarea parolei, poți ignora acest email.</p>
-    <div class="footer">
-      <p>Cu stimă,<br>Echipa ABC Grading</p>
-    </div>
-  </div>
-</body>
-</html>
-`;
 
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
@@ -91,20 +20,41 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { email, type, token } = await req.json() as EmailRequest;
+    console.log("Starting email send process...");
     
-    // Generate the appropriate link based on the email type
-    const baseUrl = "https://abc-grading.com"; // Change this to your domain
-    const link = type === "signup" 
-      ? `${baseUrl}/auth/confirm?token=${token}`
-      : `${baseUrl}/auth/reset-password?token=${token}`;
+    if (!RESEND_API_KEY) {
+      console.error("RESEND_API_KEY is not set!");
+      throw new Error("RESEND_API_KEY is not configured");
+    }
 
-    // Get the appropriate email template
-    const html = type === "signup" 
-      ? getSignupEmailTemplate(link)
-      : getResetPasswordEmailTemplate(link);
+    const { email, type } = await req.json() as EmailRequest;
+    console.log("Received request to send email to:", email, "type:", type);
+    
+    // For test emails, we'll send a simple test message
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .footer { margin-top: 40px; font-size: 0.9em; color: #666; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h1>Test Email de la ABC Grading</h1>
+          <p>Acesta este un email de test pentru a verifica funcționalitatea sistemului de email.</p>
+          <div class="footer">
+            <p>Cu stimă,<br>Echipa ABC Grading</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
 
-    // Send email using Resend
+    console.log("Attempting to send email via Resend...");
+    
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -114,14 +64,19 @@ const handler = async (req: Request): Promise<Response> => {
       body: JSON.stringify({
         from: "ABC Grading <no-reply@abc-grading.com>",
         to: [email],
-        subject: type === "signup" ? "Confirmă-ți contul ABC Grading" : "Resetare parolă ABC Grading",
+        subject: "Test Email ABC Grading",
         html: html,
       }),
     });
 
+    const responseData = await res.text();
+    console.log("Resend API Response:", responseData);
+
     if (!res.ok) {
-      throw new Error(`Failed to send email: ${await res.text()}`);
+      throw new Error(`Failed to send email: ${responseData}`);
     }
+
+    console.log("Email sent successfully!");
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
