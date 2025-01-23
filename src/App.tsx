@@ -13,6 +13,7 @@ import Auth from "./pages/Auth";
 import Success from "./pages/Success";
 import CustomerDashboard from "./pages/CustomerDashboard";
 import { CardSubmissionForm } from "./components/CardSubmissionForm";
+import CertificationPage from "./pages/CertificationPage";
 
 const queryClient = new QueryClient();
 
@@ -83,6 +84,7 @@ const App = () => {
                 <Route path="/" element={<Index />} />
                 <Route path="/submit/:serviceType" element={<CardSubmissionForm />} />
                 <Route path="/success" element={<Success />} />
+                <Route path="/cert/:ean8" element={<CertificationPage />} />
                 <Route
                   path="/admin"
                   element={

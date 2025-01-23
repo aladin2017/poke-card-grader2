@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { GradingDetails } from "@/types/grading";
+import { useNavigate } from "react-router-dom";
 
 interface CardData {
   id: string;
@@ -25,9 +26,14 @@ interface CardData {
   order_id: string;
 }
 
-export const CardVerification = () => {
-  const [ean8, setEan8] = useState("");
+interface CardVerificationProps {
+  initialEan8?: string;
+}
+
+export const CardVerification = ({ initialEan8 }: CardVerificationProps) => {
+  const [ean8, setEan8] = useState(initialEan8 || "");
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const { data: cardData, isLoading } = useQuery({
     queryKey: ['card', ean8],
@@ -69,6 +75,12 @@ export const CardVerification = () => {
     enabled: ean8.length === 8,
   });
 
+  const handleSearch = () => {
+    if (ean8.length === 8) {
+      navigate(`/cert/${ean8}`);
+    }
+  };
+
   const getGradeLabel = (grade: number) => {
     if (grade >= 10) return "Pristine (10)";
     if (grade >= 9.5) return "Gem Mint (9.5)";
@@ -91,155 +103,166 @@ export const CardVerification = () => {
     }
   };
 
+  // If we're on the index page (no initialEan8), show just the search form
+  if (!initialEan8) {
+    return (
+      <div className="min-h-[80vh] flex flex-col items-center justify-center bg-gradient-to-b from-primary/5 to-transparent px-4">
+        <div className="w-full max-w-4xl mx-auto text-center mb-12">
+          <h1 className="text-4xl md:text-6xl font-bold mb-6 gradient-text">
+            Card Verification System
+          </h1>
+          <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
+            Introduceți numărul unic de certificare al cardului pentru a verifica autenticitatea și detaliile de gradare
+          </p>
+        </div>
+
+        <div className="w-full max-w-xl mx-auto flex gap-4">
+          <Input
+            type="text"
+            placeholder="Introduceți numărul unic de certificare"
+            value={ean8}
+            onChange={(e) => setEan8(e.target.value)}
+            className="text-lg"
+            maxLength={8}
+          />
+          <Button 
+            disabled={ean8.length !== 8 || isLoading} 
+            size="lg"
+            onClick={handleSearch}
+          >
+            <Search className="mr-2 h-5 w-5" />
+            Verifică
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <Alert className="w-full max-w-xl mx-auto mb-8">
+        <AlertDescription>
+          Se caută cardul...
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (!cardData) {
+    return (
+      <Alert className="w-full max-w-xl mx-auto mb-8">
+        <AlertDescription>
+          Nu s-a găsit niciun card cu acest număr de certificare. Vă rugăm să verificați numărul și să încercați din nou.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
   return (
-    <div className="min-h-[80vh] flex flex-col items-center justify-center bg-gradient-to-b from-primary/5 to-transparent px-4">
-      <div className="w-full max-w-4xl mx-auto text-center mb-12">
-        <h1 className="text-4xl md:text-6xl font-bold mb-6 gradient-text">
-          Card Verification System
-        </h1>
-        <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
-          Introduceți numărul unic de certificare al cardului pentru a verifica autenticitatea și detaliile de gradare
-        </p>
-      </div>
-
-      <div className="w-full max-w-xl mx-auto flex gap-4 mb-8">
-        <Input
-          type="text"
-          placeholder="Introduceți numărul unic de certificare"
-          value={ean8}
-          onChange={(e) => setEan8(e.target.value)}
-          className="text-lg"
-          maxLength={8}
-        />
-        <Button disabled={ean8.length !== 8 || isLoading} size="lg">
-          <Search className="mr-2 h-5 w-5" />
-          Verifică
-        </Button>
-      </div>
-
-      {isLoading && (
-        <Alert className="w-full max-w-xl mx-auto mb-8">
-          <AlertDescription>
-            Se caută cardul...
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {!isLoading && ean8.length === 8 && !cardData && (
-        <Alert className="w-full max-w-xl mx-auto mb-8">
-          <AlertDescription>
-            Nu s-a găsit niciun card cu acest număr de certificare. Vă rugăm să verificați numărul și să încercați din nou.
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {cardData && (
-        <Card className="w-full max-w-4xl mx-auto animate-fade-up">
-          <CardHeader>
-            <CardTitle className="flex justify-between items-center">
-              <span>{cardData.card_name}</span>
-              {cardData.grading_details && (
-                <Badge variant="secondary" className="text-lg px-4 py-1">
-                  Grad: {getGradeLabel(cardData.grading_details.finalGrade)}
-                </Badge>
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-2 gap-8">
-              <div className="space-y-6">
+    <Card className="w-full max-w-4xl mx-auto animate-fade-up">
+      <CardHeader>
+        <CardTitle className="flex justify-between items-center">
+          <span>{cardData.card_name}</span>
+          {cardData.grading_details && (
+            <Badge variant="secondary" className="text-lg px-4 py-1">
+              Grad: {getGradeLabel(cardData.grading_details.finalGrade)}
+            </Badge>
+          )}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid md:grid-cols-2 gap-8">
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Detalii Card</h3>
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <h3 className="text-lg font-semibold mb-4">Detalii Card</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-500">An</p>
-                      <p className="font-medium">{cardData.year}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Set</p>
-                      <p className="font-medium">{cardData.set_name}</p>
-                    </div>
-                    {cardData.card_number && (
-                      <div>
-                        <p className="text-sm text-gray-500">Număr Card</p>
-                        <p className="font-medium">{cardData.card_number}</p>
-                      </div>
-                    )}
-                    {cardData.variant && (
-                      <div>
-                        <p className="text-sm text-gray-500">Variantă</p>
-                        <p className="font-medium">{cardData.variant}</p>
-                      </div>
-                    )}
-                    <div>
-                      <p className="text-sm text-gray-500">Status</p>
-                      <Badge variant={getStatusBadgeVariant(cardData.status)}>
-                        {cardData.status}
-                      </Badge>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Număr Certificare</p>
-                      <p className="font-medium font-mono">{ean8}</p>
-                    </div>
+                  <p className="text-sm text-gray-500">An</p>
+                  <p className="font-medium">{cardData.year}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Set</p>
+                  <p className="font-medium">{cardData.set_name}</p>
+                </div>
+                {cardData.card_number && (
+                  <div>
+                    <p className="text-sm text-gray-500">Număr Card</p>
+                    <p className="font-medium">{cardData.card_number}</p>
+                  </div>
+                )}
+                {cardData.variant && (
+                  <div>
+                    <p className="text-sm text-gray-500">Variantă</p>
+                    <p className="font-medium">{cardData.variant}</p>
+                  </div>
+                )}
+                <div>
+                  <p className="text-sm text-gray-500">Status</p>
+                  <Badge variant={getStatusBadgeVariant(cardData.status)}>
+                    {cardData.status}
+                  </Badge>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Număr Certificare</p>
+                  <p className="font-medium font-mono">{ean8}</p>
+                </div>
+              </div>
+            </div>
+
+            {cardData.grading_details && (
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Detalii Gradare</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-500">Centrare</p>
+                    <p className="font-medium">{cardData.grading_details.centering}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Suprafețe</p>
+                    <p className="font-medium">{cardData.grading_details.surfaces}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Margini</p>
+                    <p className="font-medium">{cardData.grading_details.edges}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Colțuri</p>
+                    <p className="font-medium">{cardData.grading_details.corners}</p>
                   </div>
                 </div>
+              </div>
+            )}
+          </div>
 
-                {cardData.grading_details && (
+          {(cardData.front_image_url || cardData.back_image_url) && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold mb-4">Imagini Card</h3>
+              <div className="grid grid-cols-2 gap-4">
+                {cardData.front_image_url && (
                   <div>
-                    <h3 className="text-lg font-semibold mb-4">Detalii Gradare</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm text-gray-500">Centrare</p>
-                        <p className="font-medium">{cardData.grading_details.centering}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500">Suprafețe</p>
-                        <p className="font-medium">{cardData.grading_details.surfaces}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500">Margini</p>
-                        <p className="font-medium">{cardData.grading_details.edges}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500">Colțuri</p>
-                        <p className="font-medium">{cardData.grading_details.corners}</p>
-                      </div>
-                    </div>
+                    <p className="text-sm text-gray-500 mb-2">Față</p>
+                    <img
+                      src={cardData.front_image_url}
+                      alt="Card Front"
+                      className="w-full h-96 object-contain rounded-lg shadow-lg hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                )}
+                {cardData.back_image_url && (
+                  <div>
+                    <p className="text-sm text-gray-500 mb-2">Spate</p>
+                    <img
+                      src={cardData.back_image_url}
+                      alt="Card Back"
+                      className="w-full h-96 object-contain rounded-lg shadow-lg hover:scale-105 transition-transform duration-300"
+                    />
                   </div>
                 )}
               </div>
-
-              {(cardData.front_image_url || cardData.back_image_url) && (
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold mb-4">Imagini Card</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    {cardData.front_image_url && (
-                      <div>
-                        <p className="text-sm text-gray-500 mb-2">Față</p>
-                        <img
-                          src={cardData.front_image_url}
-                          alt="Card Front"
-                          className="w-full h-96 object-contain rounded-lg shadow-lg hover:scale-105 transition-transform duration-300"
-                        />
-                      </div>
-                    )}
-                    {cardData.back_image_url && (
-                      <div>
-                        <p className="text-sm text-gray-500 mb-2">Spate</p>
-                        <img
-                          src={cardData.back_image_url}
-                          alt="Card Back"
-                          className="w-full h-96 object-contain rounded-lg shadow-lg hover:scale-105 transition-transform duration-300"
-                        />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 };
