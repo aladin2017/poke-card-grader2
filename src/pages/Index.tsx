@@ -10,6 +10,8 @@ import { supabase } from "@/integrations/supabase/client";
 const Index = () => {
   const { toast } = useToast();
 
+  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
   const handleTestEmails = async () => {
     try {
       // Test signup email
@@ -20,6 +22,9 @@ const Index = () => {
         }
       });
 
+      // Wait 1 second before sending next email
+      await delay(1000);
+
       // Test password reset email
       await supabase.functions.invoke('send-auth-email', {
         body: {
@@ -27,6 +32,9 @@ const Index = () => {
           type: 'reset'
         }
       });
+
+      // Wait 1 second before sending next email
+      await delay(1000);
 
       // Test order confirmation email with sample data
       await supabase.functions.invoke('send-auth-email', {
